@@ -1,0 +1,11 @@
+{
+  "name": "express-helpdesk-server",
+  "version": "1.0.0",
+  "description": "Sistema para criação de formulários de serviço cujos dados são transformados em SAs no CA Service Desk Manager",
+  "main": "./src/server.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "author": "Felipe Lube de Bragança <felipe.lubra@gmail.com>",
+  "license": "ISC"
+}
