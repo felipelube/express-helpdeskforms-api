@@ -1,0 +1,4 @@
+{
+  "dbUri": "mongodb://localhost/helpdeskServer_test",
+  "logLevel": "error"
+}
