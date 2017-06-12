@@ -2,8 +2,6 @@
 const
   express = require("express"),
   bodyParser = require("body-parser"),
-  
-  validatorConfig = require("./config/expressValidator"),
   morgan = require('morgan'),
   mongoose = require('mongoose'),
   apiResponses = require("./util/apiResponses"),

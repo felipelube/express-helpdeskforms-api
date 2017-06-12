@@ -1,5 +1,4 @@
 const
-  util = require("util"),
   Boom = require("boom"),
   Service = require("../models/serviceModel"),
   {validate} = require("express-jsonschema"),
