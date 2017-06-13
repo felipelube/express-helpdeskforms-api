@@ -1,6 +1,7 @@
 "use strict";
 const
   mongoose = require("mongoose"),
+  _ = require("underscore"),
   Schema = mongoose.Schema;
 
 const serviceSchema = new Schema({
@@ -27,7 +28,7 @@ const serviceSchema = new Schema({
  *            final, escondendo detalhes não necessários.
  */
 serviceSchema.methods.info = function () {
-  let service = this.toJSON();
+  const service = this.toJSON();
   return {
     machine_name: service.machine_name,
     name: service.name,
@@ -61,7 +62,8 @@ serviceSchema.statics.getJSONSchema = function () {
       },
       "name": {
         "id": "/properties/name",
-        "type": "string"
+        "type": "string",
+        "pattern": ".*\\S.*"
       },
       "description": {
         "id": "/properties/description",
@@ -81,11 +83,13 @@ serviceSchema.statics.getJSONSchema = function () {
       },
       "created": {
         "id": "/properties/created",
-        "type": "string"
+        "type": "string",
+        "format": "date-time"
       },
       "changed": {
         "id": "/properties/changed",
-        "type": "string"
+        "type": "string",
+        "format": "date-time"
       },
       "published": {
         "default": true,
@@ -106,5 +110,18 @@ serviceSchema.statics.getJSONSchema = function () {
     "type": "object"
   }
 }
+
+/**
+ * @function getMachineNameJSONSchema
+ * @desc Retorna um JSON Schema parcial para Service, apenas exigindo o 
+ * machine_name do serviço
+ */
+serviceSchema.statics.getMachineNameJSONSchema = _.memoize(function () {
+  let partialSchema = this.getJSONSchema();
+  partialSchema.properties = _.pick(partialSchema.properties, 'machine_name');
+  partialSchema.required = _.filter(partialSchema.required, (name)=>{
+    return name == 'machine_name' ? true : false;});
+  return partialSchema;
+});
 
 module.exports = mongoose.model("Service", serviceSchema);
