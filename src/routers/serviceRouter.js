@@ -11,6 +11,14 @@ const routes = function() {
       .get(serviceController.listAll)
       .post(serviceController.validate, serviceController.insert);
 
+  serviceRouter
+    .route("/:machine_name")
+      .all(serviceController.validateServiceMachineName)
+      .all(serviceController.getByMachineName)
+      .get(serviceController.view)
+      .put(serviceController.update)
+      .delete(serviceController.remove);
+
   return serviceRouter;
 }
 
