@@ -100,7 +100,6 @@ describe('Inserção de serviço...', () => {
 });
 
 describe('Listagem de serviços...', () => {
-
   before((done) => {
     chai
       .request(server)

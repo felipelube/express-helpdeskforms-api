@@ -1,12 +1,14 @@
 "use strict";
 const
   express = require("express"),
-  serviceRouter = require("./serviceRouter");
+  servicesRouter = require("./servicesRouter");
 
 const routes = function() {
   const apiRouter = express.Router();
 
-  apiRouter.use('/services', serviceRouter);
+  apiRouter.use('/services', servicesRouter);
+  /*apiRouter.use('/requests', requestsRouter);
+  apiRouter.use('/notifications', notificationsRouter);*/
 
   return apiRouter;
 }

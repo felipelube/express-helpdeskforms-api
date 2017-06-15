@@ -106,6 +106,9 @@ const serviceController = () => {
     Service
       .findByIdAndUpdate(req.service.id, updateFields, {new:true}, (err, service)=>{
         if (err) {
+          return next(new Boom.badRequest());
+        }
+        if (!service) {
           return next(new Boom.notFound());
         }
         res.jsend.success(service.info());
