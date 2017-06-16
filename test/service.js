@@ -1,5 +1,6 @@
 "use strict";
 const
+  Boom = require("boom"),
   jwt = require("jsonwebtoken"),
   mongoose = require("mongoose"),
   chai = require('chai'),
@@ -39,6 +40,28 @@ const invalidService = {
   created: new Date(),
   changed: 'sexta-feira',
   published: 'não',
+}
+
+const getServicesList = () =>{
+  return new Promise((resolve, reject)=>{
+    chai.request(server)
+      .get(`${API_BASE_URL}/services`)
+      .end((err, res) => {
+        resolve(res);
+      });
+  });
+}
+
+const insertValidService = () => {
+  return new Promise((resolve, reject)=>{
+    chai
+      .request(server)
+      .post(`${API_BASE_URL}/services`)
+      .send(validService)
+      .end((err, res) => {
+        resolve(res);
+      });
+  });
 }
 
 /* Limpe o banco de dados antes de iniciar os testes */
@@ -113,15 +136,14 @@ describe('Listagem de serviços...', () => {
   })
 
   it('depois de inserir um serviço, deve retornar uma lista não vazia', (done) => {
-    chai.request(server)
-      .get(`${API_BASE_URL}/services`)
-      .end((err, res) => {
+    getServicesList()
+      .then((res)=>{
         res.should.have.status(200);
         let services = JSON.parse(res.text).data;
         services.should.be.a('array');
         services.length.should.eql(1);
         done();
-      })
+      });
   });
 });
 
@@ -172,4 +194,90 @@ describe('Atualização de serviços...', () => {
         done();
       })
   });
-})
+});
+
+describe('Remoção de serviços...', () => {
+  it('com machine_name inválido, deve retornar um 400', (done) => {
+    chai.request(server)
+      .delete(`${API_BASE_URL}/services/${invalidService.machine_name}`)
+      .send()
+      .end((err, res) => {
+        res.should.have.status(400);
+        done();
+      })
+  });
+
+  it('com machine_name válido, mas inexistente, deve retornar um 404', (done) => {
+    chai.request(server)
+      .delete(`${API_BASE_URL}/services/abacate_magico12`)
+      .send()
+      .end((err, res) => {
+        res.should.have.status(404);
+        done();
+      })
+  });
+
+  it('com machine_name válido, deve apagar o serviço, retornar OK', (done) => {
+    chai.request(server)
+      .delete(`${API_BASE_URL}/services/${validService.machine_name}`)
+      .send()
+      .end((err, res) => {
+        res.should.have.status(200);
+
+        getServicesList()
+          .then((res) => {
+            res.should.have.status(404);
+            let data = JSON.parse(res.text).data;
+            data.should.not.be.an("array");
+            done();
+          });
+      });
+  });
+
+});
+
+describe('Visualização de serviços...', () => {
+  it('com machine_name inválido, deve retornar um 400', (done) => {
+    chai.request(server)
+      .get(`${API_BASE_URL}/services/${invalidService.machine_name}`)
+      .send()
+      .end((err, res) => {
+        res.should.have.status(400);
+        done();
+      })
+  });
+
+  it('com machine_name inexistente, deve retornar um 404', (done) => {
+    chai.request(server)
+      .get(`${API_BASE_URL}/services/${validService.machine_name}`)
+      .send()
+      .end((err, res) => {
+        res.should.have.status(404);
+        done();
+      });
+  });
+
+  it('com machine_name existente, deve retornar o serviço', (done) => {
+    insertValidService()
+      .then((res)=>{
+        chai.request(server)
+          .get(`${API_BASE_URL}/services/${validService.machine_name}`)
+          .send()
+          .end((err, res) => {
+            res.should.have.status(200);
+            let service = JSON.parse(res.text).data;
+              service.should.be.an("object");
+              service.should.have.property("category", validService.category);
+              service.should.have.property("description", validService.description);
+              service.should.have.property("machine_name", validService.machine_name);
+              service.should.have.property("name", validService.name);
+              service.should.have.property("published", validService.published);
+              service.should.have.property("sa_category", validService.sa_category);
+              service.should.have.property("changed");
+              service.should.have.property("created");
+            done();
+          });
+      });
+  });
+
+});
