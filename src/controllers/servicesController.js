@@ -129,7 +129,7 @@ const serviceController = () => {
   }
 
   const view = (req, res, next) => {
-    res.jsend.success(service.info());
+    res.jsend.success(req.service.info());
   }
 
   return {
