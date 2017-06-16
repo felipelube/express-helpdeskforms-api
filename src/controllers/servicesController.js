@@ -116,11 +116,20 @@ const serviceController = () => {
   }
 
   const remove = (req, res, next) => {
-    return next(new Boom.notImplemented());
+    Service
+      .findByIdAndRemove(req.service.id, (err, service)=>{
+        if (err) {
+          return next(new Boom.badRequest());
+        }
+        if (!service) {
+          return next(new Boom.notFound());
+        }
+        res.jsend.success(`Service ${req.service.machine_name} removed.`);
+      })
   }
 
   const view = (req, res, next) => {
-    return next(new Boom.notImplemented());
+    res.jsend.success(service.info());
   }
 
   return {
