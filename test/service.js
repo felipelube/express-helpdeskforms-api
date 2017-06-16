@@ -267,6 +267,10 @@ describe('Visualização de serviços...', () => {
             res.should.have.status(200);
             let service = JSON.parse(res.text).data;
               service.should.be.an("object");
+              //não vaze informações internas para o usuário
+              service.should.not.have.property("__v");
+              service.should.not.have.property("_id"); 
+              
               service.should.have.property("category", validService.category);
               service.should.have.property("description", validService.description);
               service.should.have.property("machine_name", validService.machine_name);

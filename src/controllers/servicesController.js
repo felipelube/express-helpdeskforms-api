@@ -11,10 +11,14 @@ const serviceController = () => {
       .find({
         published: true
       })
-      .then((services) => {
-        if (!services || services.length == 0) {
+      .then((rawServices) => {
+        if (!rawServices || rawServices.length == 0) {
           throw new Boom.notFound();
         }
+        let services = [];
+        rawServices.forEach((service)=>{
+          services.push(service.info());
+        })
         res.jsend.success(services);
       })
       .catch(next);
