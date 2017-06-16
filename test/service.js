@@ -142,7 +142,7 @@ describe('Atualização de serviços...', () => {
       })
   });
   
-  it('com apenas propriedades não permitidas, deve ignorá-las e não atualizar', (done) => {
+  it('com apenas propriedades não permitidas, deve ignorá-las e atualizar o resto', (done) => {
     chai.request(server)
       .put(`${API_BASE_URL}/services/${validService.machine_name}`)
       .send({
