@@ -5,12 +5,16 @@ const
   Service = require("../../src/models/serviceModel"),
   Request = require("../../src/models/serviceModel");
 
+/** retornar o getJSONSchema orginal */
 const mockObjects = () => {
   const getValidService = () =>{
     let jsonSchema = Service.getJSONSchema();
     return jsf.resolve(jsonSchema)
       .then((validService)=>{
         return validService;
+      })
+      .catch((err)=>{
+        throw err;
       });
   }
 
@@ -22,9 +26,28 @@ const mockObjects = () => {
       });
   }
 
+  const getInvalidService = () => {
+    return {
+      machine_name: '001557',
+      name: '    ',
+      description: '',
+      form: {
+        a: 'b'
+      },
+      category: 'Banco de dados',
+      createdAt: 'sexta-feira',
+      published: 'não',
+    }
+  }
+
+  const getInvalidRequest = () =>{
+    throw new Error();
+  }
+
   return {
     getValidService,
-    getValidRequest
+    getValidRequest,
+    getInvalidService
   }
 }
 
