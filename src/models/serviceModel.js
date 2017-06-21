@@ -1,25 +1,44 @@
 "use strict";
 const
   mongoose = require("mongoose"),
-  _ = require("underscore"),
+  _ = require("underscore");
+
+
+require('mongoose-schema-jsonschema')(mongoose);
+
+const
   Schema = mongoose.Schema;
 
 const serviceSchema = new Schema({
   machine_name: {
     type: String,
-    unique: true
+    unique: true,
+    required: true,
   },
-  name: String,
+  name: {
+    type: String,
+    required: true,
+  },
   description: String,
-  form: {},
-  category: String,
-  sa_category: String,
-  created: Date,
-  changed: {
-    type: Date,
-    default: Date.now
+  form: {
+    type: Object,
+    required: true,
   },
-  published: Boolean,
+  category: {
+    type: String,
+    required: true,
+  },
+  sa_category: {
+    type: String,
+    required: true,
+  },
+  published: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+}, {
+  timestamps: true
 });
 
 /**
@@ -28,87 +47,38 @@ const serviceSchema = new Schema({
  *            final, escondendo detalhes não necessários.
  */
 serviceSchema.methods.info = function () {
-  const service = this.toJSON();
-  return {
-    machine_name: service.machine_name,
-    name: service.name,
-    description: service.description,
-    form: service.form,
-    sa_category: service.sa_category,
-    category: service.category,
-    created: service.created,
-    changed: service.changed,
-    published: service.published
-  }
+  let service = this.toJSON();
+  service = _.omit(service, ['__v', '_id']);
+  return service;
 }
 
 /**
  * @function  getJSONSchema
  * @desc      retorna o JSON Schema para o modelo Service, segundo o draft 4 da 
- *            especificção 
+ *            especificção, usa o pacote mongoose-schema-jsonschema 
  *            (https://tools.ietf.org/html/draft-zyp-json-schema-04)
  */
 serviceSchema.statics.getJSONSchema = function () {
-  return {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "definitions": {},
-    "id": "ServiceSchema",
-    "properties": {
-      "machine_name": {
-        "id": "/properties/machine_name",
-        "maxLength": 30,
-        "pattern": "[_a-zA-Z][_a-zA-Z0-9]{0,30}",
-        "type": "string"
-      },
-      "name": {
-        "id": "/properties/name",
-        "type": "string",
-        "pattern": ".*\\S.*"
-      },
-      "description": {
-        "id": "/properties/description",
-        "type": "string"
-      },
-      "form": {
-        "id": "/properties/form",
-        "type": "object"
-      },
-      "category": {
-        "id": "/properties/category",
-        "type": "string"
-      },
-      "sa_category": {
-        "id": "/properties/sa_category",
-        "type": "string"
-      },
-      "created": {
-        "id": "/properties/created",
-        "type": "string",
-        "format": "date-time"
-      },
-      "changed": {
-        "id": "/properties/changed",
-        "type": "string",
-        "format": "date-time"
-      },
-      "published": {
-        "default": true,
-        "id": "/properties/published",
-        "type": "boolean"
-      },
-    },
-    "required": [
-      "category",
-      "machine_name",
-      "name",
-      "form",
-      "created",
-      "changed",
-      "sa_category",
-      "published"
-    ],
-    "type": "object"
-  }
+  let generatedSchema = serviceSchema.jsonSchema();
+  
+  /* validações não incluidas no model Schema, mas sim no JSON Schema */
+  generatedSchema.properties.machine_name.maxLength = 32;
+  generatedSchema.properties.machine_name.pattern = "[_a-z][_a-z0-9]{0,32}";
+  generatedSchema.properties.name.pattern = ".*\\S.*";
+  
+  return generatedSchema;
+}
+
+serviceSchema.statics.getUpdatableProperties = () => {
+  let jsonSchema = serviceSchema.jsonSchema();
+  return _.keys(_.pick(jsonSchema.properties, [
+    'name',
+    'description',
+    'form',
+    'category',
+    'sa_category',
+    'published',
+  ]));
 }
 
 /**
@@ -119,8 +89,9 @@ serviceSchema.statics.getJSONSchema = function () {
 serviceSchema.statics.getMachineNameJSONSchema = _.memoize(function () {
   let partialSchema = this.getJSONSchema();
   partialSchema.properties = _.pick(partialSchema.properties, 'machine_name');
-  partialSchema.required = _.filter(partialSchema.required, (name)=>{
-    return name == 'machine_name' ? true : false;});
+  partialSchema.required = _.filter(partialSchema.required, (name) => {
+    return name == 'machine_name' ? true : false;
+  });
   return partialSchema;
 });
 
