@@ -19,6 +19,8 @@ const requestSchema = new Schema({
   },
   created: Date,
   notified: Date
+}, {
+  timestamps: true
 });
 
 /**
@@ -66,15 +68,17 @@ requestSchema.statics.getJSONSchema = function () {
     "definitions": {},
     "id": "http://example.com/example.json",
     "properties": {
-      "created": {
-        "id": "/properties/created",
+      "createdAt": {
+        "id": "/properties/createdAt",
         "type": "string",
         "format": "date-time"
       },
-      "data": {
-        "id": "/properties/data",
-        "type": "object"
+      "updatedAt": {
+        "id": "/properties/updatedAt",
+        "type": "string",
+        "format": "date-time"
       },
+      "data": {"$ref": "/ServiceFormSchema"},
       "notifications": {
         "id": "/properties/notifications",
         "items": {
@@ -134,13 +138,29 @@ requestSchema.statics.getJSONSchema = function () {
     },
     "required": [
       "status",
-      "created",
+      "createdAt",
       "serviceId",
       "rid",
       "data"
     ],
     "type": "object"
   }
+}
+
+requestSchema.statics.getServiceFormJSONSchema = function () { 
+  const request = this.toJSON();
+  return Service
+    .findById(request.serviceId).exec()
+    .then((service)=>{
+      let formSchema;
+      try {
+        formSchema = service.getJSONSchema().form;
+        formSchema.id = "/ServiceFormSchema";
+      } catch(e) {
+        throw new Boom.notFound();
+      }
+      return formSchema;
+    });
 }
 
 /**
