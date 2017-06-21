@@ -13,12 +13,12 @@ const serviceController = () => {
       })
       .then((rawServices) => {
         if (!rawServices || rawServices.length == 0) {
-          throw new Boom.notFound();
+          return res.jsend.success([]);
         }
         let services = [];
         rawServices.forEach((service)=>{
           services.push(service.info());
-        })
+        });
         res.jsend.success(services);
       })
       .catch(next);
@@ -92,15 +92,7 @@ const serviceController = () => {
   }
 
   const update = (req, res, next) => {
-    const updatableProperties = [
-      'name',
-      'description',
-      'form',
-      'category',
-      'sa_category',
-      'published'
-    ];
-
+    const updatableProperties = Service.getUpdatableProperties();
     let updateFields = _.pick(req.body, updatableProperties);
 
     if (_.size(updateFields) == 0) {
