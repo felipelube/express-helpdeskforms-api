@@ -20,6 +20,7 @@
     "jsend": "^1.0.2",
     "jsonwebtoken": "^7.4.1",
     "mongoose": "^4.10.5",
+    "mongoose-schema-jsonschema": "^1.1.13",
     "morgan": "^1.8.2",
     "slug": "^0.9.1",
     "underscore": "^1.8.3",
