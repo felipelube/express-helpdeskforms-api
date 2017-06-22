@@ -35,13 +35,40 @@ const serviceController = () => {
   }
 
   /**
-   @function validateServiceMachineName 
+   @function validateMachineName 
 
    @desc Valida a requisição com os dados para um serviço considerando apenas o
          machine_name do serviço.
   */
-  const validateServiceMachineName = (req, res, next) => {
+  const validateMachineName = (req, res, next) => {
     return validate({params: Service.getMachineNameJSONSchema()})(req, res, next);
+  }
+  
+
+  /**
+   * @function validateUpdate
+   * @desc valida o corpo da requisição para verificar se as propriedades que o cliente
+   * quer atualizar estão entre as permitidas e valida essas propriedades contra uma versão
+   * reduzida (a estas propriedades) do JSON Schema do Serviço
+   */
+  const validateUpdate = (req, res, next) => {
+    const updatableProperties = Service.getUpdatableProperties();
+    let updateData = _.pick(req.body, updatableProperties);
+
+    if (_.size(updateData) == 0) {
+      return next(new Boom.badRequest());
+    } else {
+      req.service._updateData = updateData;
+      let partialSchemaForUpdate = Service.getJSONSchema();
+      partialSchemaForUpdate.required = _.keys(updateData); 
+      partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties, _.keys(updateData));
+
+      if (_.size(partialSchemaForUpdate.properties) == 0) {
+        return next(new Boom.badRequest()); 
+      }
+
+      return validate({body: partialSchemaForUpdate})(req, res, next);
+    }
   }
 
   /**
@@ -92,15 +119,8 @@ const serviceController = () => {
   }
 
   const update = (req, res, next) => {
-    const updatableProperties = Service.getUpdatableProperties();
-    let updateFields = _.pick(req.body, updatableProperties);
-
-    if (_.size(updateFields) == 0) {
-      return next(new Boom.badRequest())
-    }
-
     Service
-      .findByIdAndUpdate(req.service.id, updateFields, {new:true}, (err, service)=>{
+      .findByIdAndUpdate(req.service.id, req.service._updateData, {new:true}, (err, service)=>{
         if (err) {
           return next(new Boom.badRequest());
         }
@@ -129,14 +149,17 @@ const serviceController = () => {
   }
 
   return {
+    /* Métodos */
     listAll,
-    validate: validateService,
-    validateServiceMachineName,
     getByMachineName,
     view,
     update,
     remove,
-    insert
+    insert,
+    /* Middlewares */
+    validate: validateService,
+    validateMachineName,
+    validateUpdate,
   }
 }
 
