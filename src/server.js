@@ -11,6 +11,9 @@ const
   config = require("config");
 
 global.Promise = require("bluebird"); //melhor debug do que promessas nativas
+if (process.env.NODE_ENV == 'test') {
+  global.Promise.longStackTraces();
+}
 
 const
   PORT = process.env.PORT || 3000,
