@@ -64,7 +64,7 @@ serviceSchema.statics.getJSONSchema = function () {
   /* validações não incluidas no model Schema, mas sim no JSON Schema */
   generatedSchema.properties.machine_name.maxLength = 32;
   generatedSchema.properties.machine_name.pattern = "[_a-z][_a-z0-9]{0,32}";
-  generatedSchema.properties.name.pattern = ".*\\S.*";
+  generatedSchema.properties.name.pattern = /(?=\s*\S).*/;
   
   return generatedSchema;
 }
