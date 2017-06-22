@@ -9,14 +9,22 @@ const routes = function() {
   servicesRouter
     .route("/")
       .get(servicesController.listAll)
-      .post(servicesController.validate, servicesController.insert);
+      .post([
+        servicesController.validate, 
+        servicesController.insert
+      ]);
 
   servicesRouter
     .route("/:machine_name")
-      .all(servicesController.validateServiceMachineName)
-      .all(servicesController.getByMachineName)
+      .all([
+        servicesController.validateMachineName, 
+        servicesController.getByMachineName
+      ])
+      .put([
+        servicesController.validateUpdate, 
+        servicesController.update
+      ])
       .get(servicesController.view)
-      .put(servicesController.update)
       .delete(servicesController.remove);
 
   return servicesRouter;
