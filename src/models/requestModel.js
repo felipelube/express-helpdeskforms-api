@@ -3,27 +3,84 @@ const
   Boom = require("boom"),
   mongoose = require("mongoose"),
   _ = require("underscore"),
-  Service = require("./serviceModel"),
+  Service = require("./serviceModel");
+
+require('mongoose-schema-jsonschema')(mongoose);
+
+const
   Schema = mongoose.Schema;
 
-const requestSchema = new Schema({
-  rid: Number,
-  serviceId: Schema.ObjectId,
-  data: {},
-  notifications: [],
+const
+  NOTFICATION_STATUSES = ['awaitingSending', 'awaitingDataProcess', 'sent'];
+  NOTIFICATION_TYPES = ['email'];
+
+/**
+ * O Schema para este modelo para Requisições
+ * @todo //Apesar de ter um id internamente, criar um campo 'rid', número inteiro,
+ *        mais amigável para o usuário final. Esse número pode ser criado depois que a
+ *        requisição for salva (hook save)
+ */
+const requestSchema = new Schema({  
+  serviceId: {
+    type: Schema.ObjectId, //o serviço que esta requisição solicita
+    required: true,
+  },
+  data: { //os dados da requisição no formato do formulário do serviço
+    type: Object,
+    required: true,
+  }, 
+  notifications: [ //as notificações programadas/feitas, com dados formatados ou aguardando formatação
+    {
+      notificationType: { //o tipo da notificação
+        type: String,
+        enum: NOTIFICATION_TYPES,
+        required: true,
+      },
+      formatedData: { //os dados da notificação formatados, prontos para serem enviados
+        type: Object,
+        required: true,
+      },
+      priority: { //a prioridade no envio dessa notificação
+        type: Number,
+        max: 9,
+        default: 5,
+        required: true,
+      },
+      status: { //o status dessa notificação quando esse status mudou
+        status: {
+          type: String,
+          enum: NOTFICATION_STATUSES,
+          required: true,
+        },        
+        changed: [ //um histórico de status
+          {
+            statusName: {
+              type: String,
+              enum: NOTFICATION_STATUSES,
+              required: true,
+            },
+            timestamp: {
+              type: Date,
+              required: true,
+            }
+          }
+        ]
+      }
+    }
+  ],
   status: {
     type: String,
     enum: ['new', 'notificationsScheduled', 'notificationsSent',
       'caInfoReceived'
     ],
-  },
-  created: Date,
-  notified: Date
+    required: true,
+  },    
 }, {
   timestamps: true
 });
 
 /**
+ * @todo otimizar
  * @function  info
  * @desc      retorna a instância de Service pronta para ser exibida ao usuário
  *            final, escondendo detalhes não necessários.
@@ -41,15 +98,9 @@ requestSchema.methods.info = function () {
         result.service = service.machine_name;
       }
 
-      return {
-        rid: request.rid,
-        service: result.service,
-        data: request.data,
-        notifications: request.notifications,
-        status: request.status,
-        created: request.created,
-        notified: request.notified
-      }
+      request = _.omit(request, ['__v', '_id']);
+
+      return request;
     })
     .catch((err) => {
       throw new Boom.badImplementation(err.message);
@@ -63,6 +114,10 @@ requestSchema.methods.info = function () {
  *            (https://tools.ietf.org/html/draft-zyp-json-schema-04)
  */
 requestSchema.statics.getJSONSchema = function () {
+  let generatedSchema = requestSchema.jsonSchema();
+  return generatedSchema;
+  /*
+
   return {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "definitions": {},
@@ -144,7 +199,7 @@ requestSchema.statics.getJSONSchema = function () {
       "data"
     ],
     "type": "object"
-  }
+  }*/
 }
 
 requestSchema.statics.getServiceFormJSONSchema = function () { 
@@ -161,6 +216,15 @@ requestSchema.statics.getServiceFormJSONSchema = function () {
       }
       return formSchema;
     });
+}
+
+requestSchema.statics.getUpdatableProperties = () => {
+  let jsonSchema = requestSchema.jsonSchema();
+  return _.keys(_.pick(jsonSchema.properties, [
+    'data',
+    'notifications',
+    'status',    
+  ]));
 }
 
 /**
