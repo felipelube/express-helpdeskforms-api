@@ -11,7 +11,7 @@ const
   Schema = mongoose.Schema;
 
 const
-  NOTFICATION_STATUSES = ['awaitingSending', 'awaitingDataProcess', 'sent'];
+  NOTFICATION_STATUSES = ['awaitingSending', 'awaitingDataProcess', 'sent'],
   NOTIFICATION_TYPES = ['email'];
 
 /**
