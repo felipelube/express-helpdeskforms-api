@@ -20,7 +20,7 @@ const mockObjects = () => {
           summary: {
             type: "string",
             id: '/properties/summary',
-            pattern: "(?=\s*\S).*",
+            pattern: /(?=\s*\S).*/,
             description: "Breve descrição do que o script vai fazer"
           },
           sgdb: {
@@ -32,7 +32,7 @@ const mockObjects = () => {
           dbName: {
             type: "string",
             id: '/properties/dbName',
-            pattern: "(?=\s*\S).*",
+            pattern: /(?=\s*\S).*/,
             description: "Nome do banco"
           },
           environment: {
@@ -70,7 +70,7 @@ const mockObjects = () => {
           additionalInfo: {
             type: "string",
             id: '/properties/additionalInfo',
-            pattern: "(?=\s*\S).*",
+            pattern: /(?=\s*\S).*/,
             description: "Instruções adicionais para execução ou outras informações"
           },
         },
@@ -89,21 +89,23 @@ const mockObjects = () => {
           to: 'atendimento@prodest.es.gov.br',
           from: 'teste@example.com',
           body: ["%CATEGORY=${service.sa_category}",
-                  "%PARENT=${form.parentSA}",
-                  "%SUMMARY=${summary} - ${dbName}",
-                "%DESCRIPTION=Breve descrição do que o script vai fazer: ${form.summary}",
-                "SGDB (Oracle/SQL Server): ${form.sgdb}",
-                "Nome do banco: ${form.dbName}",
-                "Ambiente (Desenvolvimento, Teste, Treinamento, Homologação ou Produção): ${form.environment}",
-                "Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? ${form.scriptsCreateObjects}",
-                "É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? ${form.backupNeeded ? 'Sim, '+ form.backupRetentionPeriod :'Não'}",
-                "Data e hora para execução dos scripts: ${form.backupRetentionPeriod}",
-                "Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? ${form.dependentSA ? 'Sim, '+ form.dependentSA :'Não'}",
-                "Instruções adicionais para execução ou outras informações: ${form.additionalInfo} "].join(),
+            "%PARENT=${form.parentSA}",
+            "%SUMMARY=${summary} - ${dbName}",
+            "%DESCRIPTION=Breve descrição do que o script vai fazer: ${form.summary}",
+            "SGDB (Oracle/SQL Server): ${form.sgdb}",
+            "Nome do banco: ${form.dbName}",
+            "Ambiente (Desenvolvimento, Teste, Treinamento, Homologação ou Produção): ${form.environment}",
+            "Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? ${form.scriptsCreateObjects}",
+            "É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? ${form.backupNeeded ? 'Sim, '+ form.backupRetentionPeriod :'Não'}",
+            "Data e hora para execução dos scripts: ${form.backupRetentionPeriod}",
+            "Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? ${form.dependentSA ? 'Sim, '+ form.dependentSA :'Não'}",
+            "Instruções adicionais para execução ou outras informações: ${form.additionalInfo} "
+          ].join(),
           subject: "${summary} - ${dbName}",
-          attachments: [] /** @todo DÚVIDA: o conteúdo dos anexos retirado da leitura de um 
-          arquivo enviado enviado pelo cliente para uma api de hospedagem; ou não anexar arquivo nenhum e 
-          simplesmente listar as urls dos arquivos hospedados no formulário acima? */
+          attachments: []
+          /** @todo DÚVIDA: o conteúdo dos anexos retirado da leitura de um 
+                   arquivo enviado enviado pelo cliente para uma api de hospedagem; ou não anexar arquivo nenhum e 
+                   simplesmente listar as urls dos arquivos hospedados no formulário acima? */
 
         }
       }],
@@ -122,7 +124,7 @@ const mockObjects = () => {
         environment: 'Produção',
         scriptsCreateObjects: false,
         backupNeeded: false,
-        executionDateTime: 'Assim que possível',
+        executionDateTime: new Date(),
         parentSA: 288987
       },
       notifications: [{
@@ -143,7 +145,8 @@ const mockObjects = () => {
                 Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? Não
                 Instruções adicionais para execução ou outras informações: `,
           subject: 'Este script é apenas um teste para o nosso sistema - BD_TESTE',
-          attachments: [], /** @todo */
+          attachments: [],
+          /** @todo */
         },
         priority: 0,
         status: {
@@ -187,15 +190,37 @@ const mockObjects = () => {
       })
   }
 
-  const getInvalidRequest = () => {
-    throw new Error();
+  const getInvalidRequest = (requestIndex = 0) => {
+    let validServiceId;
+    let invalidRequests;
+
+    invalidRequests = [{
+        serviceId: true,
+        data: {},
+        notifications: [],
+        status: 'nova',
+      },
+      {
+        serviceId: '507f191e810c19729de860ea',
+        data: {},
+        notifications: [],
+        status: 'nova',
+      },
+      {
+        serviceId: '507f191e810c19729de860ea',
+        data: {},
+        notifications: [],
+        status: 'new',
+      },
+    ];
+    return invalidRequests[requestIndex];
   }
 
   return {
     getValidService,
     getValidRequest,
     getInvalidService,
-
+    getInvalidRequest,
     createValidService
   }
 }
