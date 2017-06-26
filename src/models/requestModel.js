@@ -11,14 +11,25 @@ const
   Schema = mongoose.Schema;
 
 const
-  NOTFICATION_STATUSES = ['awaitingSending', 'awaitingDataProcess', 'sent'],
+  NOTFICATION_STATUSES = [
+    'awaitingSending', //dados processados, aguardando ser enviada por e-mail
+    'awaitingDataProcess', //dados não processados, aguardando processamento
+    'sent' //enviada
+  ],
+  REQUEST_STATUSES = [
+    'new', //requisição nova, status padrão
+    'notificationsScheduled', //todas notificações enviadas para o agendador
+    'notificationsSent', //todas notificações enviadas
+    //'caInfoReceived' //informações do CA recebidas
+  ],
   NOTIFICATION_TYPES = ['email'];
 
+
 /**
- * O Schema para este modelo para Requisições
- * @todo  Apesar de ter um id internamente, criar um campo 'rid', número inteiro,
- *        mais amigável para o usuário final. Esse número pode ser criado depois que a
- *        requisição for salva (hook save)
+ * @desc O Schema para o modelo Requisição
+ * @todo Apesar de ter um id internamente, criar um campo 'rid', número inteiro,
+ *       mais amigável para o usuário final. Esse número pode ser criado depois que a
+ *       requisição for salva (hook save)
  */
 const requestSchema = new Schema({  
   serviceId: {
@@ -70,9 +81,8 @@ const requestSchema = new Schema({
   ],
   status: {
     type: String,
-    enum: ['new', 'notificationsScheduled', 'notificationsSent',
-      'caInfoReceived'
-    ],
+    enum: REQUEST_STATUSES,
+    default: 'new',
     required: true,
   },    
 }, {
@@ -80,10 +90,10 @@ const requestSchema = new Schema({
 });
 
 /**
+ * @function info
+ * @desc retorna a instância de Service pronta para ser exibida ao usuário
+ * final, escondendo detalhes internos.
  * @todo otimizar
- * @function  info
- * @desc      retorna a instância de Service pronta para ser exibida ao usuário
- *            final, escondendo detalhes não necessários.
  */
 requestSchema.methods.info = function () {
   const request = this.toJSON();
@@ -108,101 +118,21 @@ requestSchema.methods.info = function () {
 }
 
 /**
- * @function  getJSONSchema
- * @desc      retorna o JSON Schema para o modelo Request, segundo o draft 4 da 
- *            especificção 
- *            (https://tools.ietf.org/html/draft-zyp-json-schema-04)
+ * @function getJSONSchema
+ * @desc retorna o JSON Schema para o modelo Request, segundo o draft 4 da 
+ * especificação (https://tools.ietf.org/html/draft-zyp-json-schema-04).
  */
 requestSchema.statics.getJSONSchema = function () {
-  let generatedSchema = requestSchema.jsonSchema();
+  let generatedSchema = requestSchema.jsonSchema();  
+  generatedSchema.properties.data["$ref"] = '/ServiceFormSchema';
   return generatedSchema;
-  /*
-
-  return {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "definitions": {},
-    "id": "http://example.com/example.json",
-    "properties": {
-      "createdAt": {
-        "id": "/properties/createdAt",
-        "type": "string",
-        "format": "date-time"
-      },
-      "updatedAt": {
-        "id": "/properties/updatedAt",
-        "type": "string",
-        "format": "date-time"
-      },
-      "data": {"$ref": "/ServiceFormSchema"},
-      "notifications": {
-        "id": "/properties/notifications",
-        "items": {
-          "id": "/properties/notifications/items",
-          "properties": {
-            "data": {
-              "id": "/properties/notifications/items/properties/data",
-              "properties": {
-                "body": {
-                  "id": "/properties/notifications/items/properties/data/properties/body",
-                  "type": "string"
-                },
-                "subject": {
-                  "id": "/properties/notifications/items/properties/data/properties/subject",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "body",
-                "subject"
-              ],
-              "type": "object"
-            },
-            "name": {
-              "id": "/properties/notifications/items/properties/name",
-              "type": "string"
-            }
-          },
-          "required": [
-            "data",
-            "name"
-          ],
-          "type": "object"
-        },
-        "type": "array"
-      },
-      "notified": {
-        "id": "/properties/notified",
-        "type": "string",
-        "format": "date-time"
-      },
-      "rid": {
-        "id": "/properties/rid",
-        "type": "integer"
-      },
-      "serviceId": {
-        "id": "/properties/serviceId",
-        "type": "string",
-        "pattern": "^[0-9a-fA-F]{24}$"
-      },
-      "status": {
-        "id": "/properties/status",
-        "type": "string",
-        "enum": ['new', 'notificationsScheduled', 'notificationsSent',
-      'caInfoReceived'],
-      }
-    },
-    "required": [
-      "status",
-      "createdAt",
-      "serviceId",
-      "rid",
-      "data"
-    ],
-    "type": "object"
-  }*/
 }
 
-requestSchema.statics.getDataSchema = function (serviceId) {   
+/**
+ * @desc retorna o schema para determinado Serviço (serviceId),
+ * que uma Requisição válida para aquele Serviço deve respeitar
+ */
+requestSchema.statics.getDataSchema =  function (serviceId) {   
   return Service
     .findById(serviceId).exec()
     .then((service)=>{
@@ -217,6 +147,10 @@ requestSchema.statics.getDataSchema = function (serviceId) {
     });
 }
 
+/**
+ * @function getUpdatableProperties
+ * @desc retorna um array de propriedades que podem ser atualizadas neste modelo
+ */
 requestSchema.statics.getUpdatableProperties = () => {
   let jsonSchema = requestSchema.jsonSchema();
   return _.keys(_.pick(jsonSchema.properties, [
@@ -228,6 +162,7 @@ requestSchema.statics.getUpdatableProperties = () => {
 
 /**
  * @function getRIDJsonSchema
+ * @deprecated
  * @desc Retorna um JSON Schema parcial para Service, apenas exigindo o 
  * machine_name do serviço
  */
