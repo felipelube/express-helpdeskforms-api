@@ -4,7 +4,9 @@ const
   _ = require("underscore"),
   Request = require("../models/requestModel"),
   Service = require("../models/serviceModel"),
-  {validate} = require("express-jsonschema"),
+  {
+    validate
+  } = require("express-jsonschema"),
   slug = require('slug');
 
 const requestsController = () => {
@@ -16,7 +18,7 @@ const requestsController = () => {
           throw new Boom.notFound();
         }
         let requests = [];
-        rawRequests.forEach((Request)=>{
+        rawRequests.forEach((Request) => {
           requests.push(Request.info());
         })
         res.jsend.success(requests);
@@ -24,68 +26,59 @@ const requestsController = () => {
       .catch(next);
   }
   /**
-   @function validateRequest 
-
-   @desc Valida os dados de uma Requisição no corpo da requisição contra um JSON
-         Schema. Internamente usa a função validate do pacote 
-         express-jsonschema, que por sua vez retorna uma função middleware.
+   * @function validateRequest 
+   * @desc Verifica se o Serviço ao qual os dados Requisição enviada existe, e
+   * se existe, retorna uma função de validação que considera o JSON Schema geral
+   * para toda Requisição e o específico para o Serviço dessa requisição.
   */
   const validateRequest = (req, res, next) => {
-    if(!req.body.serviceId || 
-      !mongoose.Types.ObjectId.isValid(req.body.serviceId))
-      {
-        return next(new Boom.badRequest)
-      }
-    
+    if (!req.body.serviceId ||
+      !mongoose.Types.ObjectId.isValid(req.body.serviceId)) {
+      return next(new Boom.badRequest('Missing/invalid serviceId'));
+    }
     Service
       .findById(req.body.serviceId).exec()
-        .then((service)=>{
-          /** verifica se o serviço existe antes de validar os outros dados 
-           * da Requisição
-           **/
-          if(!service) {
-            throw new Boom.notFound("service for this request not found")
-          }
-          try{
-            let basicRequestInfoSchema = Request.getJSONSchema();
-            Request.getDataSchema(req.body.serviceId)
-              .then((requestDataSchema) =>{                
-                return validate({body: basicRequestInfoSchema}, [requestDataSchema])(req, res, next);
-              })
-              .catch((err)=>{
-                console.log(err);
-              });
-            
-          }
-          catch(e) {
-            throw e;
-          }
-        })
-        .catch(next);
+      .then((service) => {        
+        if (!service) {
+          throw new Boom.notFound("Service for this Request does not exist")
+        }
+        try {
+          let basicRequestInfoSchema = Request.getJSONSchema();
+          Request.getDataSchema(req.body.serviceId)
+            .then((requestDataSchema) => {
+              return validate({body: basicRequestInfoSchema}, [requestDataSchema])(req, res, next);
+            })
+            .catch(next);
+        } catch (e) {
+          throw e;
+        }
+      })
+      .catch(next);
   }
 
   /**
-   @function validateRequestRID 
-
-   @desc Valida a requisição com os dados para uma Requisição considerando 
-         apenas a RID da Requisição.
+   * @function validateRequestRID    
+   * @desc Valida a requisição com os dados para uma Requisição considerando 
+   * apenas a RID da Requisição.
+   * @deprecated
   */
   const validateRequestRID = (req, res, next) => {
     return validate({params: Request.getRIDJsonSchema()})(req, res, next);
   }
 
   /**
-   @function insert
-
-   @desc Após a validação dos dados, recebe os mesmos e insere uma nova 
-         Requisição no banco de dados. Retorna um HTTP 201 e a Requisição criada.
+   * @function insert
+   * @desc Após a validação dos dados, recebe os mesmos e insere uma nova 
+   * Requisição no banco de dados. 
+   * Se tudo estiver OK retorna um HTTP 201 e a Requisição criada e envia
+   * a nova Requisição para o Agendador.
   */
   const insert = (req, res, next) => {
-    let newRequest = new Request({      
+    let newRequest = new Request({
       serviceId: req.body.serviceId,
       data: req.body.data,
       notifications: req.body.notifications,
-      status: 'new',      
+      status: 'new',
     });
     newRequest
       .save()
@@ -100,13 +93,16 @@ const requestsController = () => {
         return request;
       })
       .then((request) => {
-        /** envia a requisição para o Agendador... */
+        /** @todo envia a requisição para o Agendador... */
       })
-      .catch((err)=>{
+      .catch((err) => {
         return next(err);
       });
   }
 
+/**
+ * @deprecated
+ */
   const getByRID = (req, res, next) => {
     Request
       .findOne({
@@ -121,7 +117,9 @@ const requestsController = () => {
       })
       .catch(next);
   }
-
+/**
+ * @desc atualiza uma Requisição
+ */
   const update = (req, res, next) => {
     const updatableProperties = [
       'notifications',
@@ -135,7 +133,9 @@ const requestsController = () => {
     }
 
     Request
-      .findByIdAndUpdate(req.request.id, updateFields, {new:true}, (err, request)=>{
+      .findByIdAndUpdate(req.request.id, updateFields, {
+        new: true
+      }, (err, request) => {
         if (err) {
           return next(new Boom.badRequest());
         }
@@ -145,7 +145,9 @@ const requestsController = () => {
         res.jsend.success(request.info());
       });
   }
-
+/**
+ * @desc visualiza uma Requisição
+ */
   const view = (req, res, next) => {
     res.jsend.success(req.request.info());
   }
