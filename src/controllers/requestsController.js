@@ -47,7 +47,15 @@ const requestsController = () => {
             throw new Boom.notFound("service for this request not found")
           }
           try{
-            return validate({body: Request.getJSONSchema()})(req, res, next);
+            let basicRequestInfoSchema = Request.getJSONSchema();
+            Request.getDataSchema(req.body.serviceId)
+              .then((requestDataSchema) =>{                
+                return validate({body: basicRequestInfoSchema}, [requestDataSchema])(req, res, next);
+              })
+              .catch((err)=>{
+                console.log(err);
+              });
+            
           }
           catch(e) {
             throw e;
@@ -69,18 +77,15 @@ const requestsController = () => {
   /**
    @function insert
 
-   @desc Após a validação dos dados da Requisilção, recebe os mesmos na 
-         requisição e insere uma nova Requisição no banco de dados. Retorna um 
-         HTTP 201 e a Requisição criada.
+   @desc Após a validação dos dados, recebe os mesmos e insere uma nova 
+         Requisição no banco de dados. Retorna um HTTP 201 e a Requisição criada.
   */
   const insert = (req, res, next) => {
-    let newRequest = new Request({
-      rid: req.body.rid,
+    let newRequest = new Request({      
       serviceId: req.body.serviceId,
       data: req.body.data,
-      notifications: [],
-      status: 'new',
-      created: Date.now(),
+      notifications: req.body.notifications,
+      status: 'new',      
     });
     newRequest
       .save()
@@ -93,7 +98,9 @@ const requestsController = () => {
           .jsend
           .success(request);
       })
-      .catch(next);
+      .catch((err)=>{
+        return next(err);
+      });
   }
 
   const getByRID = (req, res, next) => {

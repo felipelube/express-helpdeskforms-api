@@ -69,6 +69,11 @@ serviceSchema.statics.getJSONSchema = function () {
   return generatedSchema;
 }
 
+serviceSchema.methods.getDataSchema =  function() {
+  let service = this;
+  return service.form;
+}
+
 serviceSchema.statics.getUpdatableProperties = () => {
   let jsonSchema = serviceSchema.jsonSchema();
   return _.keys(_.pick(jsonSchema.properties, [

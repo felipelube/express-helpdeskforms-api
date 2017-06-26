@@ -16,7 +16,7 @@ const
 
 /**
  * O Schema para este modelo para Requisições
- * @todo //Apesar de ter um id internamente, criar um campo 'rid', número inteiro,
+ * @todo  Apesar de ter um id internamente, criar um campo 'rid', número inteiro,
  *        mais amigável para o usuário final. Esse número pode ser criado depois que a
  *        requisição for salva (hook save)
  */
@@ -98,9 +98,9 @@ requestSchema.methods.info = function () {
         result.service = service.machine_name;
       }
 
-      request = _.omit(request, ['__v', '_id']);
+      result = _.omit(request, ['__v', '_id']);
 
-      return request;
+      return result;
     })
     .catch((err) => {
       throw new Boom.badImplementation(err.message);
@@ -202,14 +202,13 @@ requestSchema.statics.getJSONSchema = function () {
   }*/
 }
 
-requestSchema.statics.getServiceFormJSONSchema = function () { 
-  const request = this.toJSON();
+requestSchema.statics.getDataSchema = function (serviceId) {   
   return Service
-    .findById(request.serviceId).exec()
+    .findById(serviceId).exec()
     .then((service)=>{
       let formSchema;
       try {
-        formSchema = service.getJSONSchema().form;
+        formSchema = service.getDataSchema();
         formSchema.id = "/ServiceFormSchema";
       } catch(e) {
         throw new Boom.notFound();

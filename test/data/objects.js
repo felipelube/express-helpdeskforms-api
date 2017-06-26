@@ -148,7 +148,10 @@ const mockObjects = () => {
         priority: 0,
         status: {
           status: 'awaitingSending',
-          changed: new Date,
+          changed: [{
+            statusName: 'awaitingSending',
+            timestamp: new Date,
+          }]
         }
       }],
       status: 'new',

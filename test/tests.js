@@ -246,7 +246,7 @@ describe('Testes com Serviços', () => {
 
               /* CAMPOS QUE NÃO DEVEM SER ATUALIZADOS */
               serviceUpdated.should.have.property('machine_name', insertedService.machine_name);
-              
+
               /* TIMESTAMPS */
               Date.parse(serviceUpdated.updatedAt).should.be.gt(insertedService.updatedAt.getTime());
               Date.parse(serviceUpdated.createdAt).should.be.eql(insertedService.createdAt.getTime());
@@ -323,20 +323,29 @@ describe('Testes com Requisições', () => {
   describe('Listagem', () => {
 
   });
-
   describe('Criação', () => { //CREATE
+    beforeEach(() => {
+      return clearDB();
+    });
 
-  });
-
-  describe('Visualização', () => { //READ
-
-  });
-
-  describe('Atualização', () => { //UPDATE
-
-  });
-
-  describe('Remoção', () => { //DELETE
-
+    it('Deve aceitar a criação de uma requisição gerada corretamente', (done) => {
+      mockObjects.createValidService()
+        .then((insertedService) => {
+          mockObjects.getValidRequest()
+            .then((generatedRequest) => {
+              generatedRequest.serviceId = insertedService._id;
+              return generatedRequest;
+            })
+            .then((generatedRequest) => {                            
+              chai.request(server)
+                .post(API_REQUESTS_BASE_URL)
+                .send(generatedRequest)
+                .end((err, res) => {
+                  res.should.have.status(201);
+                  done(); 
+                });
+            });
+        });
+    });
   });
 });
