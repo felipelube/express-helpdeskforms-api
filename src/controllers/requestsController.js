@@ -97,6 +97,10 @@ const requestsController = () => {
           .status(201)
           .jsend
           .success(request);
+        return request;
+      })
+      .then((request) => {
+        /** envia a requisição para o Agendador... */
       })
       .catch((err)=>{
         return next(err);
