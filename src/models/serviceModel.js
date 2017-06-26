@@ -9,42 +9,46 @@ require('mongoose-schema-jsonschema')(mongoose);
 const
   Schema = mongoose.Schema;
 
+/**
+ * @desc o schema para o modelo Serviço
+ */
 const serviceSchema = new Schema({
-  machine_name: {
+  machine_name: { //nome de máquina do Serviço, usado em urls
     type: String,
     unique: true,
+    maxlength: 32,
     required: true,
   },
-  name: {
+  name: { //nome 'humano', título do Serviço
     type: String,
     required: true,
   },
-  description: String,
-  form: {
+  description: String, //descrição para o serviço, pode ser um texto longo
+  form: { //formulário com as descrições dos campos em JSON Schema
     type: Object,
     required: true,
   },
-  category: {
+  category: { //categoria simpels para este serviço @todo evoluir
     type: String,
     required: true,
   },
-  sa_category: {
+  sa_category: { //categoria no CA Service Desk Manager
     type: String,
     required: true,
   },
-  published: {
+  published: { //publicado: se o serviço está disponível para ser requisitado ou não
     type: Boolean,
     required: true,
     default: false,
   },
 }, {
-  timestamps: true
+  timestamps: true //use createdAt e updatedAt
 });
 
 /**
  * @function  info
- * @desc      retorna a instância de Service pronta para ser exibida ao usuário
- *            final, escondendo detalhes não necessários.
+ * @desc filtra propriedades de uma instância de Serviço escondendo detalhes não necessários,
+ * preparando assim para a exibição ao usuário final
  */
 serviceSchema.methods.info = function () {
   let service = this.toJSON();
@@ -53,27 +57,34 @@ serviceSchema.methods.info = function () {
 }
 
 /**
- * @function  getJSONSchema
- * @desc      retorna o JSON Schema para o modelo Service, segundo o draft 4 da 
- *            especificção, usa o pacote mongoose-schema-jsonschema 
- *            (https://tools.ietf.org/html/draft-zyp-json-schema-04)
+ * @function getJSONSchema
+ * @desc retorna o JSON Schema para o modelo Service, segundo o draft 4 da 
+ * especificção, usa o pacote mongoose-schema-jsonschema
  */
 serviceSchema.statics.getJSONSchema = function () {
   let generatedSchema = serviceSchema.jsonSchema();
-  
-  /* validações não incluidas no model Schema, mas sim no JSON Schema */
+
+  /* validações não inferidas/incluidas do/no Schema mongoose, mas que devem estar no JSON Schema */
   generatedSchema.properties.machine_name.maxLength = 32;
-  generatedSchema.properties.machine_name.pattern = "[_a-z][_a-z0-9]{0,32}";
+  generatedSchema.properties.machine_name.pattern = /[_a-z][_a-z0-9]{0,32}/;
   generatedSchema.properties.name.pattern = /(?=\s*\S).*/;
-  
+
   return generatedSchema;
 }
 
-serviceSchema.methods.getDataSchema =  function() {
+/**
+ * @function getDataSchema
+ * @desc retorna o JSON Schema do formulário para requisitar este serviço
+ */
+serviceSchema.methods.getDataSchema = function () {
   let service = this;
   return service.form;
 }
 
+/**
+ * @function getUpdatableProperties
+ * @desc retorna um array de propriedades que podem ser atualizadas neste modelo 
+ */
 serviceSchema.statics.getUpdatableProperties = () => {
   let jsonSchema = serviceSchema.jsonSchema();
   return _.keys(_.pick(jsonSchema.properties, [
@@ -88,8 +99,7 @@ serviceSchema.statics.getUpdatableProperties = () => {
 
 /**
  * @function getMachineNameJSONSchema
- * @desc Retorna um JSON Schema parcial para Service, apenas exigindo o 
- * machine_name do serviço
+ * @desc Retorna um JSON Schema somente para a propriedade 'machine_name' deste modelo
  */
 serviceSchema.statics.getMachineNameJSONSchema = _.memoize(function () {
   let partialSchema = this.getJSONSchema();
