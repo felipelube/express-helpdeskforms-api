@@ -336,14 +336,64 @@ describe('Testes com Requisições', () => {
               generatedRequest.serviceId = insertedService._id;
               return generatedRequest;
             })
-            .then((generatedRequest) => {                            
+            .then((generatedRequest) => {
               chai.request(server)
                 .post(API_REQUESTS_BASE_URL)
                 .send(generatedRequest)
                 .end((err, res) => {
                   res.should.have.status(201);
-                  done(); 
+                  done();
                 });
+            });
+        });
+    });
+
+    it('Não deve aceitar uma Requisição sem serviceId', (done) => {
+      chai.request(server)
+        .post(API_REQUESTS_BASE_URL)
+        .send(mockObjects.getInvalidRequest())
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    });
+
+    it('Não deve aceitar uma Requisição com Serviço inexistente', (done) => {
+      chai.request(server)
+        .post(API_REQUESTS_BASE_URL)
+        .send(mockObjects.getInvalidRequest(1))
+        .end((err, res) => {
+          res.should.have.status(404);
+          done();
+        });
+    });
+
+    it('Não deve aceitar uma Requisição inválida, mesmo com Serviço existente', (done) => {
+      mockObjects.createValidService()
+        .then((insertedService) => {
+          let invalidRequest = mockObjects.getInvalidRequest();
+          invalidRequest.serviceId = insertedService._id;
+          chai.request(server)
+            .post(API_REQUESTS_BASE_URL)
+            .send(invalidRequest)
+            .end((err, res) => {
+              res.should.have.status(400);
+              done();
+            });
+        });
+    });
+
+    it('Não deve aceitar uma Requisição inválida, mesmo com Serviço existente (2)', (done) => {
+      mockObjects.createValidService()
+        .then((insertedService) => {
+          let invalidRequest = mockObjects.getInvalidRequest(2);
+          invalidRequest.serviceId = insertedService._id;
+          chai.request(server)
+            .post(API_REQUESTS_BASE_URL)
+            .send(invalidRequest)
+            .end((err, res) => {
+              res.should.have.status(400);
+              done();
             });
         });
     });
