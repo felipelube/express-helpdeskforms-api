@@ -1,15 +1,21 @@
+"use strict";
 const
+  _ = require("underscore"),
   Boom = require("boom"),
   mongoose = require("mongoose"),
-  _ = require("underscore"),
+  {validate} = require("express-jsonschema");
+
+const
   Request = require("../models/requestModel"),
-  Service = require("../models/serviceModel"),
-  {
-    validate
-  } = require("express-jsonschema"),
-  slug = require('slug');
+  Service = require("../models/serviceModel");
 
 const requestsController = () => {
+  /**
+   * @function listAll
+   * @desc lista todas as Requisições
+   * @todo listar apenas as Requisições do usuário
+   * @todo para um usuário gestor, listar apenas as Requisições do órgão
+   */
   const listAll = (req, res, next) => {
     Request
       .find()
@@ -25,12 +31,12 @@ const requestsController = () => {
       })
       .catch(next);
   }
+  
   /**
-   * @function validateRequest 
-   * @desc Verifica se o Serviço ao qual os dados Requisição enviada existe, e
-   * se existe, retorna uma função de validação que considera o JSON Schema geral
-   * para toda Requisição e o específico para o Serviço dessa requisição.
-  */
+   * @function validateRequest
+   * @desc Verifica se o Serviço referenciado pela Requisição enviada existe e, se existe, retorna uma função de 
+   * validação que considera o JSON Schema geral para toda Requisição e o específico para o Serviço dessa Requisição.
+   */
   const validateRequest = (req, res, next) => {
     if (!req.body.serviceId ||
       !mongoose.Types.ObjectId.isValid(req.body.serviceId)) {
@@ -38,13 +44,13 @@ const requestsController = () => {
     }
     Service
       .findById(req.body.serviceId).exec()
-      .then((service) => {        
+      .then((service) => {
         if (!service) {
           throw new Boom.notFound("Service for this Request does not exist")
         }
         try {
           let basicRequestInfoSchema = Request.getJSONSchema();
-          Request.getDataSchema(req.body.serviceId)
+          Request.getDataSchema(req.body.serviceId) /**@todo otimizar */
             .then((requestDataSchema) => {
               return validate({body: basicRequestInfoSchema}, [requestDataSchema])(req, res, next);
             })
@@ -57,22 +63,10 @@ const requestsController = () => {
   }
 
   /**
-   * @function validateRequestRID    
-   * @desc Valida a requisição com os dados para uma Requisição considerando 
-   * apenas a RID da Requisição.
-   * @deprecated
-  */
-  const validateRequestRID = (req, res, next) => {
-    return validate({params: Request.getRIDJsonSchema()})(req, res, next);
-  }
-
-  /**
    * @function insert
-   * @desc Após a validação dos dados, recebe os mesmos e insere uma nova 
-   * Requisição no banco de dados. 
-   * Se tudo estiver OK retorna um HTTP 201 e a Requisição criada e envia
-   * a nova Requisição para o Agendador.
-  */
+   * @desc Insere uma nova Requisição e envia ela para o agendador. Os dados já foram validados pelo middleware 
+   * validateRequest acima. Retorna a Requisição pronta para ser exibida para o usuário final.
+   */
   const insert = (req, res, next) => {
     let newRequest = new Request({
       serviceId: req.body.serviceId,
@@ -93,70 +87,101 @@ const requestsController = () => {
         return request;
       })
       .then((request) => {
-        /** @todo envia a requisição para o Agendador... */
+        /** @todo envia a Requisição para o Agendador... */
       })
-      .catch((err) => {
-        return next(err);
-      });
+      .catch((err)=>{
+        /**@todo tratar duplicatas com uma exceção Boom.conflict() */
+      })
+      .catch(next);
   }
 
-/**
- * @deprecated
- */
-  const getByRID = (req, res, next) => {
+  /**
+   * @function validateUpdate
+   * @desc Filtra as propriedades enviadas para atualização pelo cliente para deixar apenas as permitidas e retorna uma 
+   * função middleware que valida essas propriedades contra uma versão reduzida a estas propriedades do JSON Schema 
+   * geral para Requisições.
+   */
+  const validateUpdate = (req, res, next) => {
+    const updatableProperties = Request.getUpdatableProperties();
+    let updateData = _.pick(req.body, updatableProperties);
+
+    if (_.size(updateData) == 0) { //cliente passou apenas propriedades não atualizáveis
+      return next(new Boom.badRequest());
+    } else {
+      req.request._updateData = updateData;
+      let partialSchemaForUpdate = Request.getJSONSchema();
+      partialSchemaForUpdate.required = _.keys(updateData);
+      partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties, _.keys(updateData));
+
+      if (_.size(partialSchemaForUpdate.properties) == 0) {
+        return next(new Boom.badRequest());
+      }
+
+      return validate({
+        body: partialSchemaForUpdate
+      })(req, res, next);
+    }
+  }
+  
+  /**
+   * @function validateRequestId
+   * @desc Retorna uma função middleware que valida apenas o parâmetro 'id' da URL usando parcialmente este  campo tal 
+   * como definido no JSON Schema geral das Requisição.
+   */
+  const validateRequestId = (req, res, next) => {
+    return validate({params: Request.getIdSchema()})(req, res, next);
+  }
+
+  /**
+   * @function update
+   * @desc Simplesmente atualiza uma Requisição. Os dados a serem atualizados já foram validados e inseridos na requisição 
+   * pelo middleware validateUpdate acima. Retorna a Requisição atualizada e pronta para ser exibido ao usuário final.
+   */
+  const update = (req, res, next) => {
     Request
-      .findOne({
-        rid: req.params.rid
-      })
+      .findByIdAndUpdate(req.request.id, req.request._updateData)
       .then((request) => {
         if (!request) {
           throw new Boom.notFound();
+        }
+        res.jsend.success(request.info());
+      })
+      .catch(next);
+  }
+  
+  /**
+   * @function view
+   * @desc Simplesmente retorna o objeto Requisição pronto para ser exibido ao usuário final
+   */
+  const view = (req, res, next) => {
+    req.request
+      .info()
+      .then(info=>res.jsend.success(info));    
+  }
+
+  /**
+   * @function getById
+   * @desc Middleware que busca e, se achado, insere na requisição o objeto completo da Requisição identificada pelo 
+   * parâmetro 'id' na URL.
+   */
+  const getById = (req, res, next) => {
+    Request
+      .findById(req.params.id)
+      .then((request) => {
+        if (!request) {
+          throw new Boom.notFound('Request not found');
         }
         req.request = request;
         next();
       })
       .catch(next);
   }
-/**
- * @desc atualiza uma Requisição
- */
-  const update = (req, res, next) => {
-    const updatableProperties = [
-      'notifications',
-      'status',
-    ];
-
-    let updateFields = _.pick(req.body, updatableProperties);
-
-    if (_.size(updateFields) == 0) {
-      return next(new Boom.badRequest())
-    }
-
-    Request
-      .findByIdAndUpdate(req.request.id, updateFields, {
-        new: true
-      }, (err, request) => {
-        if (err) {
-          return next(new Boom.badRequest());
-        }
-        if (!request) {
-          return next(new Boom.notFound());
-        }
-        res.jsend.success(request.info());
-      });
-  }
-/**
- * @desc visualiza uma Requisição
- */
-  const view = (req, res, next) => {
-    res.jsend.success(req.request.info());
-  }
 
   return {
     listAll,
     validate: validateRequest,
-    validateRequestRID,
-    getByRID,
+    validateRequestId,
+    getById,
     view,
     update,
     insert
