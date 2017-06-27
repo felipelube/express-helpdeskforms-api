@@ -1,3 +1,4 @@
+"use strict";
 const
   express = require("express"),
   Router = express.Router,
@@ -12,9 +13,9 @@ const routes = function() {
       .post(requestsController.validate, requestsController.insert);
 
   requestsRouter
-    .route("/:rid")
-      .all(requestsController.validateRequestRID)
-      .all(requestsController.getByRID)
+    .route("/:id")
+      .all(requestsController.validateRequestId)
+      .all(requestsController.getById)
       .get(requestsController.view)
       .put(requestsController.update);
 
