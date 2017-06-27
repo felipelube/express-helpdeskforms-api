@@ -306,15 +306,36 @@ describe('Testes com Serviços', () => {
       return clearDB();
     });
 
-    it('Deve apagar um serviço já inserido e retornar OK', () => {
-      return mockObjects.createValidService()
+    it('Deve apagar um serviço já inserido e retornar OK', (done) => {
+      mockObjects.createValidService()
         .then((insertedService) => {
           chai.request(server)
             .delete(`${API_SERVICES_BASE_URL}/${insertedService.machine_name}`)
             .end((err, res) => {
               res.should.have.status(200);
+              done();
             });
         });
+    });
+
+    it('Deve falhar com um 400 para um machine_name inválido', (done) => {
+      const invalidService = mockObjects.getInvalidService();
+      chai.request(server)
+        .delete(`${API_SERVICES_BASE_URL}/${invalidService.machine_name}`)
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });        
+    });
+
+    it('Deve falhar com um 404 para um serviço inexistente', (done) => {
+      const invalidService = mockObjects.getInvalidService(1);
+      chai.request(server)
+        .delete(`${API_SERVICES_BASE_URL}/${invalidService.machine_name}`)
+        .end((err, res) => {
+          res.should.have.status(404);
+          done();
+        });        
     });
   });
 });
