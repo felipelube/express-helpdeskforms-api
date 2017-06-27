@@ -1,11 +1,16 @@
 const
-  Boom = require("boom"),
   _ = require("underscore"),
-  Service = require("../models/serviceModel"),
-  {validate} = require("express-jsonschema"),
-  slug = require('slug');
+  Boom = require("boom"),
+  {validate} = require("express-jsonschema");
+  
+const
+  Service = require("../models/serviceModel");  
 
 const serviceController = () => {
+  /**
+   * @function listAll
+   * @desc lista todos os serviços publicados
+   */
   const listAll = (req, res, next) => {
     Service
       .find({
@@ -24,38 +29,35 @@ const serviceController = () => {
       .catch(next);
   }
   /**
-   @function validateService 
-
-   @desc Valida os dados do serviço no corpo da requisição contra um JSON
-         Schema. Internamente usa a função validate do pacote 
-         express-jsonschema, que por sua vez retorna uma função middleware.
-  */
+   * @function validateService 
+   * @desc Retorna uma função middleware que valida os dados de um Serviço no corpo da requisição http contra o JSON 
+   * Schema geral para Serviços. Internamente usa a função validate do pacote express-jsonschema.
+   */
   const validateService = (req, res, next) => {
     return validate({body: Service.getJSONSchema()})(req, res, next);
   }
 
   /**
-   @function validateMachineName 
-
-   @desc Valida a requisição com os dados para um serviço considerando apenas o
-         machine_name do serviço.
-  */
-  const validateMachineName = (req, res, next) => {
+   * @function validateMachineName 
+   * @desc Retorna uma função middleware que valida apenas o parâmetro 'machine_name' da URL usando parcialmente este 
+   * campo tal como definido no JSON Schema geral Serviços.
+   */
+  const validateMachineName = (req, res, next) => {    
     return validate({params: Service.getMachineNameJSONSchema()})(req, res, next);
   }
   
 
   /**
    * @function validateUpdate
-   * @desc valida o corpo da requisição para verificar se as propriedades que o cliente
-   * quer atualizar estão entre as permitidas e valida essas propriedades contra uma versão
-   * reduzida (a estas propriedades) do JSON Schema do Serviço
+   * @desc Filtra as propriedades enviadas para atualização pelo cliente para deixar apenas as permitidas para 
+   * atualização e retorna uma função middleware que valida essas propriedades contra uma versão reduzida a 
+   * estas propriedades do JSON Schema geral para Serviços.
    */
   const validateUpdate = (req, res, next) => {
     const updatableProperties = Service.getUpdatableProperties();
     let updateData = _.pick(req.body, updatableProperties);
 
-    if (_.size(updateData) == 0) {
+    if (_.size(updateData) == 0) { //cliente passou apenas propriedades não atualizáveis
       return next(new Boom.badRequest());
     } else {
       req.service._updateData = updateData;
@@ -72,12 +74,10 @@ const serviceController = () => {
   }
 
   /**
-   @function insert
-
-   @desc Após a validação dos dados do serviço, recebe os mesmos na requisição e
-         insere um novo serviço no banco de dados. Retorna um HTTP 201 e o 
-         serviço criado.
-  */
+   * @function insert
+   * @desc Simplesmente insere um novo Serviço. Os dados já foram validados pelo middleware validateService acima. 
+   * Retorna o serviço pronto para ser exibido para o usuário final.
+   */
   const insert = (req, res, next) => {
     let newService = new Service({
       machine_name: req.body.machine_name,
@@ -85,9 +85,9 @@ const serviceController = () => {
       description: req.body.description,
       form: req.body.form,
       category: req.body.category,
-      sa_category: req.body.sa_category,
-      created: Date.now(),
+      sa_category: req.body.sa_category,      
       published: req.body.published
+      /**@todo incluir os timestamps enviados pela requisição ou usar os gerados automaticamente pelo MongoDB? */
     });
     newService
       .save()
@@ -102,7 +102,11 @@ const serviceController = () => {
       })
       .catch(next);
   }
-
+  /**
+   * @function getByMachineName
+   * @desc Middleware que busca e, se achado, insere na requisição o objeto completo do serviço identificado pelo 
+   * parâmetro 'machine_name' na URL.
+   */
   const getByMachineName = (req, res, next) => {
     Service
       .findOne({
@@ -117,33 +121,44 @@ const serviceController = () => {
       })
       .catch(next);
   }
-
+  /**
+   * @function update
+   * @desc Simplesmente atualiza um serviço. Os dados a serem atualizados já foram validados e inseridos na requisição 
+   * pelo middleware validateUpdate acima. Retorna o serviço atualizado pronto para ser exibido para o usuário final.
+   */
   const update = (req, res, next) => {
     Service
-      .findByIdAndUpdate(req.service.id, req.service._updateData, {new:true}, (err, service)=>{
-        if (err) {
-          return next(new Boom.badRequest());
-        }
-        if (!service) {
-          return next(new Boom.notFound());
-        }
-        res.jsend.success(service.info());
-      });
+      .findByIdAndUpdate(req.service.id, req.service._updateData, {new:true})
+        .then((service)=>{
+          if (!service) {
+            throw new Boom.notFound();
+          }
+          return service.info();
+        })
+        .then((service)=>{
+          res.jsend.success(service);
+        })
+        .catch(next);
   }
-
+  /**
+   * @function remove
+   * @desc Simplesmente remove um serviço.
+   */
   const remove = (req, res, next) => {
     Service
-      .findByIdAndRemove(req.service.id, (err, service)=>{
-        if (err) {
-          return next(new Boom.badRequest());
-        }
-        if (!service) {
-          return next(new Boom.notFound());
-        }
-        res.jsend.success(`Service ${req.service.machine_name} removed.`);
-      })
+      .findByIdAndRemove(req.service.id)
+        .then((service)=>{
+          if (!service) {
+            throw new Boom.notFound();
+          }
+          res.jsend.success(`Service ${service.machine_name} removed.`);
+        })        
+        .catch(next);
   }
-
+  /**
+   * @function view
+   * @desc Simplesmente retorna o objeto serviço pronto para ser exibido ao usuário final
+   */
   const view = (req, res, next) => {
     res.jsend.success(req.service.info());
   }
