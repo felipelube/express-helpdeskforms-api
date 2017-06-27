@@ -100,7 +100,7 @@ requestSchema.methods.info = function () {
   return Service
     .findById(request.serviceId).exec()
     .then((service) => {
-      let result = {}
+      let result = request;
 
       if (!service) {
         result.service = '<deleted>';
@@ -108,7 +108,7 @@ requestSchema.methods.info = function () {
         result.service = service.machine_name;
       }
 
-      result = _.omit(request, ['__v', '_id']);
+      result = _.omit(request, ['__v', '_id', 'serviceId']);
 
       return result;
     })
@@ -126,6 +126,22 @@ requestSchema.statics.getJSONSchema = function () {
   let generatedSchema = requestSchema.jsonSchema();  
   generatedSchema.properties.data["$ref"] = '/ServiceFormSchema';
   return generatedSchema;
+}
+
+/**
+ * @function getIdSchema
+ * @desc retorna o JSON Schema para o modelo Request, segundo o draft 4 da 
+ * especificação (https://tools.ietf.org/html/draft-zyp-json-schema-04).
+ */
+requestSchema.statics.getIdSchema = function () {
+  let partialSchema = this.getJSONSchema();
+  partialSchema.properties = _.pick(partialSchema.properties, '_id');
+  partialSchema.required = _.filter(partialSchema.required, (name) => {
+    return name == '_id' ? true : false;
+  });
+  partialSchema.properties.id = partialSchema.properties['_id'];
+  delete(partialSchema.properties['_id']);
+  return partialSchema;
 }
 
 /**
