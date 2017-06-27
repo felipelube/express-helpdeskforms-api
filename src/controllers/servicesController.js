@@ -1,3 +1,4 @@
+"use strict";
 const
   _ = require("underscore"),
   Boom = require("boom"),
@@ -9,7 +10,7 @@ const
 const serviceController = () => {
   /**
    * @function listAll
-   * @desc lista todos os serviços publicados
+   * @desc lista todos os Serviços publicados
    */
   const listAll = (req, res, next) => {
     Service
@@ -76,7 +77,7 @@ const serviceController = () => {
   /**
    * @function insert
    * @desc Simplesmente insere um novo Serviço. Os dados já foram validados pelo middleware validateService acima. 
-   * Retorna o serviço pronto para ser exibido para o usuário final.
+   * Retorna o Serviço pronto para ser exibido para o usuário final.
    */
   const insert = (req, res, next) => {
     let newService = new Service({
@@ -100,11 +101,14 @@ const serviceController = () => {
           .jsend
           .success(service);
       })
+      .catch((err)=>{        
+        /**@todo tratar duplicatas com uma exceção Boom.conflict() */         
+      })
       .catch(next);
   }
   /**
    * @function getByMachineName
-   * @desc Middleware que busca e, se achado, insere na requisição o objeto completo do serviço identificado pelo 
+   * @desc Middleware que busca e, se achado, insere na requisição o objeto completo do Serviço identificado pelo 
    * parâmetro 'machine_name' na URL.
    */
   const getByMachineName = (req, res, next) => {
@@ -114,7 +118,7 @@ const serviceController = () => {
       })
       .then((service) => {
         if (!service) {
-          throw new Boom.notFound();
+          throw new Boom.notFound('Service not found');
         }
         req.service = service;
         next();
@@ -123,15 +127,15 @@ const serviceController = () => {
   }
   /**
    * @function update
-   * @desc Simplesmente atualiza um serviço. Os dados a serem atualizados já foram validados e inseridos na requisição 
-   * pelo middleware validateUpdate acima. Retorna o serviço atualizado pronto para ser exibido para o usuário final.
+   * @desc Simplesmente atualiza um Serviço. Os dados a serem atualizados já foram validados e inseridos na requisição 
+   * pelo middleware validateUpdate acima. Retorna o Serviço atualizado e pronto para ser exibido para o usuário final.
    */
   const update = (req, res, next) => {
     Service
       .findByIdAndUpdate(req.service.id, req.service._updateData, {new:true})
         .then((service)=>{
           if (!service) {
-            throw new Boom.notFound();
+            throw new Boom.notFound('Service not found');
           }
           return service.info();
         })
@@ -142,14 +146,14 @@ const serviceController = () => {
   }
   /**
    * @function remove
-   * @desc Simplesmente remove um serviço.
+   * @desc Simplesmente remove um Serviço.
    */
   const remove = (req, res, next) => {
     Service
       .findByIdAndRemove(req.service.id)
         .then((service)=>{
           if (!service) {
-            throw new Boom.notFound();
+            throw new Boom.notFound('Service not found');
           }
           res.jsend.success(`Service ${service.machine_name} removed.`);
         })        
@@ -157,7 +161,7 @@ const serviceController = () => {
   }
   /**
    * @function view
-   * @desc Simplesmente retorna o objeto serviço pronto para ser exibido ao usuário final
+   * @desc Simplesmente retorna o objeto Serviço pronto para ser exibido ao usuário final
    */
   const view = (req, res, next) => {
     res.jsend.success(req.service.info());
