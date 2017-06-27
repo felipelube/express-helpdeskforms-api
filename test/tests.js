@@ -419,4 +419,52 @@ describe('Testes com Requisições', () => {
         });
     });
   });
+
+  describe('Visualização', () => { //READ
+    beforeEach(() => {
+      return clearDB();
+    });
+
+    it('Deve retornar corretamente uma requisição criada', (done) => {
+      mockObjects.createValidService()
+        .then(mockObjects.createValidRequest)
+        .then((validRequest)=>{
+          chai.request(server)
+            .get(`${API_REQUESTS_BASE_URL}/${validRequest._id}`)            
+            .end((err, res) => {
+              res.should.have.status(200);
+              res.body.status.should.eql("success");
+              let createdRequest = res.body.data;
+              createdRequest.should.be.an("object");
+
+              /* CAMPOS OBRIGATÓRIOS */
+              createdRequest.should.have.property('service');
+              createdRequest.should.have.property('data');
+              createdRequest.data.should.be.an("object");
+              createdRequest.data.should.not.eql({});
+              
+              createdRequest.should.have.property('notifications');
+              createdRequest.notifications.should.be.an("array");
+              createdRequest.notifications.should.not.eql([]);
+
+              createdRequest.should.have.property('status', validRequest.status);              
+
+              /* TIMESTAMPS */
+              Date.parse(createdRequest.updatedAt).should.be.eql(validRequest.updatedAt.getTime());
+              Date.parse(createdRequest.createdAt).should.be.eql(validRequest.createdAt.getTime());
+
+              /* CAMPOS QUE NÃO DEVEM SER EXIBIDOS */
+              createdRequest.should.not.have.property('_id');
+              createdRequest.should.not.have.property('id');
+              createdRequest.should.not.have.property('serviceId');
+              createdRequest.should.not.have.property('__v');
+
+              done();
+            });          
+        })
+        .catch((err)=>{
+          should.fail(err);
+        })
+    });
+  });
 });
