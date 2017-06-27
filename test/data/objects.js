@@ -1,6 +1,7 @@
+"use strict";
 const
   Service = require("../../src/models/serviceModel"),
-  Request = require("../../src/models/serviceModel");
+  Request = require("../../src/models/requestModel");
 
 /** retornar o getJSONSchema orginal */
 const mockObjects = () => {
@@ -162,8 +163,7 @@ const mockObjects = () => {
   }
 
   const getInvalidService = (serviceIndex = 0) => {
-    const invalidServices = [
-      {
+    const invalidServices = [{
         machine_name: '001557',
         name: '    ',
         description: '',
@@ -204,6 +204,24 @@ const mockObjects = () => {
       })
   }
 
+  const createValidRequest = (serviceId) => {
+    return getValidRequest()
+      .then((validRequest) => {        
+        if(typeof(serviceId) == 'string') {
+          validRequest.serviceId = serviceId;
+        } else if (typeof(serviceId) == 'object' && serviceId._id) {
+          validRequest.serviceId = serviceId._id;
+        } else {
+          throw new Error('Invalid serviceId');
+        }
+        const newRequest = new Request(validRequest);
+        return newRequest.save()          
+      })
+      .catch((err) => {
+        throw err;
+      });
+  }
+
   const getInvalidRequest = (requestIndex = 0) => {
     const invalidRequests = [{
         serviceId: true,
@@ -232,7 +250,8 @@ const mockObjects = () => {
     getValidRequest,
     getInvalidService,
     getInvalidRequest,
-    createValidService
+    createValidService,
+    createValidRequest
   }
 }
 
