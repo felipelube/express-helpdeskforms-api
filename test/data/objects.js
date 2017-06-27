@@ -161,18 +161,32 @@ const mockObjects = () => {
     })
   }
 
-  const getInvalidService = () => {
-    return {
-      machine_name: '001557',
-      name: '    ',
-      description: '',
-      form: {
-        a: 'b'
+  const getInvalidService = (serviceIndex = 0) => {
+    const invalidServices = [
+      {
+        machine_name: '001557',
+        name: '    ',
+        description: '',
+        form: {
+          a: 'b'
+        },
+        category: 'Banco de dados',
+        createdAt: 'sexta-feira',
+        published: 'não',
       },
-      category: 'Banco de dados',
-      createdAt: 'sexta-feira',
-      published: 'não',
-    }
+      {
+        machine_name: 'bd_maintenance',
+        name: '    ',
+        description: '',
+        form: {
+          a: 'b'
+        },
+        category: 'Banco de dados',
+        createdAt: 'sexta-feira',
+        published: 'não',
+      },
+    ]
+    return invalidServices[serviceIndex];
   }
 
   const createValidService = () => {
@@ -191,10 +205,7 @@ const mockObjects = () => {
   }
 
   const getInvalidRequest = (requestIndex = 0) => {
-    let validServiceId;
-    let invalidRequests;
-
-    invalidRequests = [{
+    const invalidRequests = [{
         serviceId: true,
         data: {},
         notifications: [],
