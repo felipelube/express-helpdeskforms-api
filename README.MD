@@ -1,16 +1,12 @@
 #Helpdesk Server
-Permite o cadastro de serviços e neles formulários que serão preenchidos pelo
-usuário final a fim de solicitar determinado serviço. Ao preencher os dados, a 
-aplicação envia, para o Mail Eater do CA Service Desk, dados já formatados para 
-a formalização de uma SA.
+- Permite o cadastro de Serviços e neles formulários que serão preenchidos pelo usuário final a fim de solicitar o 
+Serviço.
+- Permite a criação de Requisições (de Serviço)
 
 ##Conceitos
-- Serviço: é toda atividade específica ofertada em um catálogo e que possui 
-determinados requisitos, informações, a serem oferecidos pelo usuário final em 
-um formulário específico.
-- Formulário: coleção de campos usados para a instrução de uma solicitação de 
-serviço. Esses campos são customizáveis através de tipo, quantidade e 
-validações adicionais.
-- Solicitação: dados para a instrução de determinado serviço.
-- Notificação: o envio dos dados de determinada solicitação para um destino 
-configurável.
+- Serviço: é toda atividade específica ofertada em um catálogo e que possui determinados requisitos, informações a serem
+preenchidas pelo usuário final em um formulário específico, bem como informações sobre ações de notificação.
+- Formulário: coleção de campos usados para a instrução de uma Requisição. Esses campos são customizáveis através de 
+tipo, quantidade e validações adicionais. A especificação desse formulário e seus campos está dentro de um Serviço e 
+adere ao JSON Schema draft 4.
+- Requisição: é o conjunto de informações referentes a determinado Serviço, uma Requisição de Serviço.
