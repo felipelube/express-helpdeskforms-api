@@ -1,7 +1,7 @@
 {
-  "name": "express-helpdeskforms-server",
+  "name": "express-hf-server-creator",
   "version": "1.0.0",
-  "description": "Sistema para criação de formulários de serviço cujos dados são transformados em SAs no CA Service Desk Manager",
+  "description": "Sistema para criação de Serviços e Requisições de Serviço, que serão enviadas para o CA Service Desk em forma de Solicitações/Incidentes",
   "main": "./src/server.js",
   "scripts": {
     "test": "gulp test"
