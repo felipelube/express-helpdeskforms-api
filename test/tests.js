@@ -48,7 +48,7 @@ describe('Testes com Serviços', () => {
       return clearDB();
     });
 
-    it('Deve aceitar a criação de um serviço gerado corretamente', (done) => {
+    it('Deve aceitar a criação de um Serviço gerado corretamente', (done) => {
       mockObjects.getValidService()
         .then((generatedService) => {
           chai.request(server)
@@ -61,7 +61,7 @@ describe('Testes com Serviços', () => {
         });
     });
 
-    it('Não deve aceitar um serviço inválido', (done) => {
+    it('Não deve aceitar um Serviço inválido', (done) => {
       chai.request(server)
         .post(API_SERVICES_BASE_URL)
         .send(mockObjects.getInvalidService())
@@ -71,7 +71,7 @@ describe('Testes com Serviços', () => {
         });
     });
 
-    it('Não deve aceitar um serviço vazio', (done) => {
+    it('Não deve aceitar um Serviço vazio', (done) => {
       chai.request(server)
         .post(API_SERVICES_BASE_URL)
         .send({})
@@ -110,7 +110,7 @@ describe('Testes com Serviços', () => {
       return clearDB();
     });
 
-    it('Deve retornar corretamente um serviço criado', (done) => {
+    it('Deve retornar corretamente um Serviço criado', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
           chai.request(server)
@@ -147,7 +147,7 @@ describe('Testes com Serviços', () => {
         });
     });
 
-    it('Deve retornar um NotFound para nomes de serviço inválidos', (done) => {
+    it('Deve retornar um NotFound para nomes de Serviço inválidos', (done) => {
       chai.request(server)
         .get(`${API_SERVICES_BASE_URL}/abacate!!!`)
         .end((err, res) => {
@@ -156,7 +156,7 @@ describe('Testes com Serviços', () => {
         });
     });
 
-    it('Deve retornar um NotFound para nomes de serviço válidos, mas não existentes', (done) => {
+    it('Deve retornar um NotFound para nomes de Serviço válidos, mas não existentes', (done) => {
       chai.request(server)
         .get(`${API_SERVICES_BASE_URL}/abacate_magico`)
         .end((err, res) => {
@@ -306,7 +306,7 @@ describe('Testes com Serviços', () => {
       return clearDB();
     });
 
-    it('Deve apagar um serviço já inserido e retornar OK', (done) => {
+    it('Deve apagar um Serviço já inserido e retornar OK', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
           chai.request(server)
@@ -328,7 +328,7 @@ describe('Testes com Serviços', () => {
         });        
     });
 
-    it('Deve falhar com um 404 para um serviço inexistente', (done) => {
+    it('Deve falhar com um 404 para um Serviço inexistente', (done) => {
       const invalidService = mockObjects.getInvalidService(1);
       chai.request(server)
         .delete(`${API_SERVICES_BASE_URL}/${invalidService.machine_name}`)
@@ -349,7 +349,7 @@ describe('Testes com Requisições', () => {
       return clearDB();
     });
 
-    it('Deve aceitar a criação de uma requisição gerada corretamente', (done) => {
+    it('Deve aceitar a criação de uma Requisição gerada corretamente', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
           mockObjects.getValidRequest()
@@ -369,7 +369,7 @@ describe('Testes com Requisições', () => {
         });
     });
 
-    it('Não deve aceitar uma Requisição sem serviceId', (done) => {
+    it('Não deve aceitar a criação de uma Requisição sem serviceId', (done) => {
       chai.request(server)
         .post(API_REQUESTS_BASE_URL)
         .send(mockObjects.getInvalidRequest())
@@ -379,7 +379,7 @@ describe('Testes com Requisições', () => {
         });
     });
 
-    it('Não deve aceitar uma Requisição com Serviço inexistente', (done) => {
+    it('Não deve aceitar a criação de uma Requisição com Serviço inexistente', (done) => {
       chai.request(server)
         .post(API_REQUESTS_BASE_URL)
         .send(mockObjects.getInvalidRequest(1))
@@ -389,7 +389,7 @@ describe('Testes com Requisições', () => {
         });
     });
 
-    it('Não deve aceitar uma Requisição inválida, mesmo com Serviço existente', (done) => {
+    it('Não deve aceitar a criação de uma Requisição inválida, mesmo com Serviço existente', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
           let invalidRequest = mockObjects.getInvalidRequest();
@@ -404,7 +404,7 @@ describe('Testes com Requisições', () => {
         });
     });
 
-    it('Não deve aceitar uma Requisição inválida, mesmo com Serviço existente (2)', (done) => {
+    it('Não deve aceitar a criação de uma Requisição inválida, mesmo com Serviço existente (2)', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
           let invalidRequest = mockObjects.getInvalidRequest(2);
@@ -425,7 +425,7 @@ describe('Testes com Requisições', () => {
       return clearDB();
     });
 
-    it('Deve retornar corretamente uma requisição criada', (done) => {
+    it('Deve retornar corretamente uma Requisição criada', (done) => {
       mockObjects.createValidService()
         .then(mockObjects.createValidRequest)
         .then((validRequest)=>{
@@ -461,10 +461,7 @@ describe('Testes com Requisições', () => {
 
               done();
             });          
-        })
-        .catch((err)=>{
-          should.fail(err);
-        })
+        });
     });
   });
 });
