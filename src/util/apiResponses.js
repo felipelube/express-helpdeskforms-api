@@ -1,57 +1,55 @@
-"use strict";
-const
-  Boom = require("boom"),
-  expressJSONSchema = require("express-jsonschema"),
-  logger = require("./apiUtil").logger;
+const Boom = require('boom');
+const expressJSONSchema = require('express-jsonschema');
+const logger = require('./apiUtil').logger;
 
-const apiResponses = function () {
-  const exceptionToJsendResponse = function(err, req, res, next) {
-    if(!err.isBoom) {
-      if(err instanceof Error) {
-        err = Boom.wrap(err);
-      } else if(err instanceof expressJSONSchema.JsonSchemaValidation) {
-        err = new Boom.badRequest("Erro na validação dos dados", err.validations);
+const apiResponses = () => {
+  const exceptionToJsendResponse = (err, req, res, next) => {
+    let error = err;
+    /** converta todos os erros para erros Boom */
+    if (!error.isBoom) { // se esse é um erro genérico
+      if (error instanceof Error) {
+        error = Boom.wrap(error); // decora o erro com propriedades de erro Boom
+      } else if (error instanceof expressJSONSchema.JsonSchemaValidation) {
+        // crie um novo erro Boom Bad Request em casos de problemas de validação
+        error = new Boom.badRequest('Erro na validação dos dados', error.validations);
       }
     }
     res
-      .status(err.output.statusCode)
-      .set(err.output.headers);
-      
-    if(err.isServer) {
-      logger.error(err);
-      res.jsend.error(err.message, {
-        code: err.output.statusCode,
-        data: err.data
-      });
-    } else {
-      logger.debug(err);
-      if (!err.data) {
-        res.jsend.fail(err.message);
-      } else {
-        res.jsend.fail(err.data);
-      }
-    } 
+      .status(error.output.statusCode)
+      .set(error.output.headers);
+
+    logger.debug(error);
+    if (error.isServer) { // erros http 5x são 'erros 'jsend
+      return next(res.jsend.error(error.message, {
+        code: error.output.statusCode,
+        data: error.data,
+      }));
+    }
+    return next(res.jsend.fail(error.data || error.message)); // outros erros são 'falhas' jsend
   };
 
-  const default404Response = function(req, res) {
-    let url = req.protocol + '://' + req.get('host') + req.originalUrl;
-    let err = new Boom.notFound(`${url} not found`);
-    
+  const default404Response = (req, res, next) => {
+    const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+    const err = new Boom.notFound(`${url} not found`);
+
+    res.status = 404;
+
     logger.debug(err);
-
-    res
-      .status(err.output.statusCode)
-      .set(err.output.headers)
-      .jsend
-        .fail(err.message);
-
-  }
-  
+    if (req.accepts('json')) {
+      return next(res
+        .set(err.output.headers)
+        .jsend
+        .fail(err.message));
+    }
+    return next(res
+      .type('txt')
+      .send(err.message));
+  };
 
   return {
     exceptionToJsendResponse,
-    default404Response  
-  }
-}
+    default404Response,
+  };
+};
 
 module.exports = apiResponses();
