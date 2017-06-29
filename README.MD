@@ -1,4 +1,4 @@
-#Helpdesk Forms Server - Creator
+#Helpdesk Forms API
 - Permite o cadastro de Serviços e neles formulários que serão preenchidos pelo usuário final a fim de solicitar o 
 Serviço.
 - Permite a criação de Requisições (de Serviço)

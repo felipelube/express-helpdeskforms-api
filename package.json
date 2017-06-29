@@ -1,5 +1,5 @@
 {
-  "name": "express-hf-server-creator",
+  "name": "express-helpdeskforms-api",
   "version": "1.0.0",
   "description": "Sistema para criação de Serviços e Requisições de Serviço, que serão enviadas para o CA Service Desk em forma de Solicitações/Incidentes",
   "main": "./src/server.js",
