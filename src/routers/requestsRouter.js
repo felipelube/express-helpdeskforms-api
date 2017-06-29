@@ -1,25 +1,24 @@
-"use strict";
-const
-  express = require("express"),
-  Router = express.Router,
-  requestsController = require("../controllers/requestsController");
+const express = require('express');
 
-const routes = function() {
-  let requestsRouter = express.Router();
+const router = express.Router;
+const requestsController = require('../controllers/requestsController');
 
-  requestsRouter
-    .route("/")
-      .get(requestsController.listAll)
-      .post(requestsController.validate, requestsController.insert);
+const routes = () => {
+  const requestsRouter = router();
 
   requestsRouter
-    .route("/:id")
-      .all(requestsController.validateRequestId)
-      .all(requestsController.getById)
-      .get(requestsController.view)
-      .put(requestsController.update);
+    .route('/')
+    .get(requestsController.listAll)
+    .post(requestsController.validate, requestsController.insert);
+
+  requestsRouter
+    .route('/:id')
+    .all(requestsController.validateRequestId)
+    .all(requestsController.getById)
+    .get(requestsController.view)
+    .put([requestsController.validateUpdate, requestsController.update]);
 
   return requestsRouter;
-}
+};
 
 module.exports = routes();
