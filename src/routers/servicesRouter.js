@@ -1,34 +1,33 @@
-"use strict";
-const
-  express = require("express"),
-  Router = express.Router,
-  servicesController = require("../controllers/servicesController");
+const express = require('express');
 
-const routes = function() {
-  let servicesRouter = express.Router();
+const router = express.Router;
+const servicesController = require('../controllers/servicesController');
 
-  servicesRouter
-    .route("/")
-      .get(servicesController.listAll)
-      .post([
-        servicesController.validate, 
-        servicesController.insert
-      ]);
+const routes = () => {
+  const servicesRouter = router();
 
   servicesRouter
-    .route("/:machine_name")
-      .all([
-        servicesController.validateMachineName, 
-        servicesController.getByMachineName
-      ])
-      .put([
-        servicesController.validateUpdate, 
-        servicesController.update
-      ])
-      .get(servicesController.view)
-      .delete(servicesController.remove);
+    .route('/')
+    .get(servicesController.listAll)
+    .post([
+      servicesController.validate,
+      servicesController.insert,
+    ]);
+
+  servicesRouter
+    .route('/:machine_name')
+    .all([
+      servicesController.validateMachineName,
+      servicesController.getByMachineName,
+    ])
+    .put([
+      servicesController.validateUpdate,
+      servicesController.update,
+    ])
+    .get(servicesController.view)
+    .delete(servicesController.remove);
 
   return servicesRouter;
-}
+};
 
 module.exports = routes();
