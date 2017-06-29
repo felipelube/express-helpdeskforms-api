@@ -1,52 +1,36 @@
-"use strict";
+const { describe, it, beforeEach } = require('mocha');
+const chai = require('chai');
+const chaiHttp = require('chai-http');
 
-/** Bibliotecas */
-const
-  Boom = require("boom"),
-  mongoose = require("mongoose"),
-  chai = require('chai'),
-  chaiHttp = require('chai-http'),
-  should = chai.should(),
-  _ = require("underscore"),
-  Promise = require("bluebird"),
-  expect = chai.expect;
+const server = require('../src/server');
 
-const //o app
-  server = require('../src/server');
+/** Modelos e objetos para testes */
+const Service = require('../src/models/serviceModel');
+const Request = require('../src/models/requestModel');
+const mockObjects = require('./data/objects');
 
+global.Promise = require('bluebird');
 
-const //modelos
-  Service = require("../src/models/serviceModel"),
-  Request = require("../src/models/requestModel");
-
-const //funções para retornar objetos mockados
-  mockObjects = require("./data/objects");
-
+chai.should();
 chai.use(chaiHttp);
 
-const //constantes
-  API_BASE_URL = '/api/v1',
-  API_SERVICES_BASE_URL = '/api/v1/services',
-  API_REQUESTS_BASE_URL = '/api/v1/requests',
-  API_NOTIFICATIONS_BASE_URL = '/api/v1/notifications';
-
-const clearDB = () => {
-  const removalPromises = [
-    Service.remove().exec(),
-    Request.remove().exec(),
-  ]
-
-  return Promise.all(removalPromises);
-}
+const API_SERVICES_BASE_URL = '/api/v1/services';
+const API_REQUESTS_BASE_URL = '/api/v1/requests';
+/**
+ * @function clearDB
+ * @desc limpa as coleções do banco de dados
+ */
+const clearDB = () => Promise.all([
+  Service.remove().exec(),
+  Request.remove().exec(),
+]);
 
 describe('Testes com Serviços', () => {
   describe('Listagem', () => {
 
   });
-  describe('Criação', () => { //CREATE
-    beforeEach(() => {
-      return clearDB();
-    });
+  describe('Criação', () => { // CREATE
+    beforeEach(clearDB);
 
     it('Deve aceitar a criação de um Serviço gerado corretamente', (done) => {
       mockObjects.getValidService()
@@ -82,20 +66,17 @@ describe('Testes com Serviços', () => {
     });
 
     it('Deve validar as propriedades antes de inserir', (done) => {
-      const dataToUpdate = {
-        'name': '    ',
-      };
-
       mockObjects.getValidService()
         .then((generatedService) => {
-          generatedService.name = '    ';
+          const invalidService = generatedService;
+          invalidService.name = '    ';
           chai.request(server)
             .post(`${API_SERVICES_BASE_URL}`)
-            .send(generatedService)
+            .send(invalidService)
             .end((err, res) => {
               res.should.have.status(400);
-              res.body.status.should.eql("fail");
-              let validationErrors = res.body.data.body;
+              res.body.status.should.eql('fail');
+              const validationErrors = res.body.data.body;
               validationErrors.should.be.an('array');
               validationErrors.length.should.gt(0);
               done();
@@ -103,12 +84,30 @@ describe('Testes com Serviços', () => {
         });
     });
 
+    it('Não deve aceitar a criação de um serviço com machine_name já em uso', (done) => {
+      mockObjects.createValidService()
+        .then(() => mockObjects.getValidService())
+        .then((generatedService) => {
+          chai.request(server)
+            .post(API_SERVICES_BASE_URL)
+            .send(generatedService)
+            .end((err, res) => {
+              res.should.have.status(409);
+              res.body.status.should.eql('fail');
+              const validationErrors = res.body.data.body;
+              validationErrors.should.be.an('array');
+              validationErrors.length.should.gt(0);
+              done();
+            });
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    });
   });
 
-  describe('Visualização', () => { //READ
-    beforeEach(() => {
-      return clearDB();
-    });
+  describe('Visualização', () => { // READ
+    beforeEach(() => clearDB());
 
     it('Deve retornar corretamente um Serviço criado', (done) => {
       mockObjects.createValidService()
@@ -117,9 +116,9 @@ describe('Testes com Serviços', () => {
             .get(`${API_SERVICES_BASE_URL}/${insertedService.machine_name}`)
             .end((err, res) => {
               res.should.have.status(200);
-              res.body.status.should.eql("success");
-              let serviceCreated = res.body.data;
-              serviceCreated.should.be.an("object");
+              res.body.status.should.eql('success');
+              const serviceCreated = res.body.data;
+              serviceCreated.should.be.an('object');
 
               /* CAMPOS OBRIGATÓRIOS */
               serviceCreated.should.have.property('machine_name', insertedService.machine_name);
@@ -134,8 +133,10 @@ describe('Testes com Serviços', () => {
               }
 
               /* TIMESTAMPS */
-              Date.parse(serviceCreated.updatedAt).should.be.eql(insertedService.updatedAt.getTime());
-              Date.parse(serviceCreated.createdAt).should.be.eql(insertedService.createdAt.getTime());
+              Date.parse(serviceCreated.updatedAt).should.be.eql(
+                insertedService.updatedAt.getTime());
+              Date.parse(serviceCreated.createdAt).should.be.eql(
+                insertedService.createdAt.getTime());
 
               /* CAMPOS QUE NÃO DEVEM SER EXIBIDOS */
               serviceCreated.should.not.have.property('_id');
@@ -152,7 +153,7 @@ describe('Testes com Serviços', () => {
         .get(`${API_SERVICES_BASE_URL}/abacate!!!`)
         .end((err, res) => {
           res.should.have.status(404);
-          done()
+          done();
         });
     });
 
@@ -161,20 +162,17 @@ describe('Testes com Serviços', () => {
         .get(`${API_SERVICES_BASE_URL}/abacate_magico`)
         .end((err, res) => {
           res.should.have.status(404);
-          done()
+          done();
         });
     });
-
   });
 
-  describe('Atualização', () => { //UPDATE
-    beforeEach(() => {
-      return clearDB();
-    });
+  describe('Atualização', () => { // UPDATE
+    beforeEach(() => clearDB());
     it('Se tudo estiver OK, deve atualizar', (done) => {
       const dataToUpdate = {
-        'category': 'Banco de dados',
-        'sa_category': 'Banco de dados.Manutenção'
+        category: 'Banco de dados',
+        sa_category: 'Banco de dados.Manutenção',
       };
 
       mockObjects.createValidService()
@@ -184,9 +182,9 @@ describe('Testes com Serviços', () => {
             .send(dataToUpdate)
             .end((err, res) => {
               res.should.have.status(200);
-              res.body.status.should.eql("success");
-              let serviceUpdated = res.body.data;
-              serviceUpdated.should.be.an("object");
+              res.body.status.should.eql('success');
+              const serviceUpdated = res.body.data;
+              serviceUpdated.should.be.an('object');
 
               /* CAMPOS INDIFERENTES À ATUALIZAÇÃO */
               if (insertedService.description) {
@@ -201,8 +199,10 @@ describe('Testes com Serviços', () => {
               serviceUpdated.should.have.property('sa_category', dataToUpdate.sa_category);
 
               /* TIMESTAMPS */
-              Date.parse(serviceUpdated.updatedAt).should.be.gt(insertedService.updatedAt.getTime());
-              Date.parse(serviceUpdated.createdAt).should.be.eql(insertedService.createdAt.getTime());
+              Date.parse(serviceUpdated.updatedAt).should.be.gt(
+                insertedService.updatedAt.getTime());
+              Date.parse(serviceUpdated.createdAt).should.be.eql(
+                insertedService.createdAt.getTime());
 
               /* CAMPOS QUE NÃO DEVEM SER EXIBIDOS */
               serviceUpdated.should.not.have.property('_id');
@@ -216,9 +216,9 @@ describe('Testes com Serviços', () => {
 
     it('Deve atualizar somente propriedades atualizáveis e ignorar as não atualizáveis', (done) => {
       const dataToUpdate = {
-        'category': 'Banco de dados',
-        'sa_category': 'Banco de dados.Manutenção',
-        'machine_name': 'bd_maintenance',
+        category: 'Banco de dados',
+        sa_category: 'Banco de dados.Manutenção',
+        machine_name: 'bd_maintenance',
       };
 
       mockObjects.createValidService()
@@ -228,9 +228,9 @@ describe('Testes com Serviços', () => {
             .send(dataToUpdate)
             .end((err, res) => {
               res.should.have.status(200);
-              res.body.status.should.eql("success");
-              let serviceUpdated = res.body.data;
-              serviceUpdated.should.be.an("object");
+              res.body.status.should.eql('success');
+              const serviceUpdated = res.body.data;
+              serviceUpdated.should.be.an('object');
 
               /* CAMPOS INDIFERENTES À ATUALIZAÇÃO */
               if (insertedService.description) {
@@ -248,8 +248,10 @@ describe('Testes com Serviços', () => {
               serviceUpdated.should.have.property('machine_name', insertedService.machine_name);
 
               /* TIMESTAMPS */
-              Date.parse(serviceUpdated.updatedAt).should.be.gt(insertedService.updatedAt.getTime());
-              Date.parse(serviceUpdated.createdAt).should.be.eql(insertedService.createdAt.getTime());
+              Date.parse(serviceUpdated.updatedAt).should.be.gt(
+                insertedService.updatedAt.getTime());
+              Date.parse(serviceUpdated.createdAt).should.be.eql(
+                insertedService.createdAt.getTime());
 
               /* CAMPOS QUE NÃO DEVEM SER EXIBIDOS */
               serviceUpdated.should.not.have.property('_id');
@@ -263,7 +265,7 @@ describe('Testes com Serviços', () => {
 
     it('Deve retornar um BadRequest se a tentativa de atualização for somente composta por propriedades não atualizáveis', (done) => {
       const dataToUpdate = {
-        'machine_name': 'bd_maintenance',
+        machine_name: 'bd_maintenance',
       };
 
       mockObjects.createValidService()
@@ -273,7 +275,7 @@ describe('Testes com Serviços', () => {
             .send(dataToUpdate)
             .end((err, res) => {
               res.should.have.status(400);
-              res.body.status.should.eql("fail");
+              res.body.status.should.eql('fail');
 
               done();
             });
@@ -282,7 +284,7 @@ describe('Testes com Serviços', () => {
 
     it('Deve validar as propriedades antes de atualizar', (done) => {
       const dataToUpdate = {
-        'name': '    ',
+        name: '    ',
       };
 
       mockObjects.createValidService()
@@ -292,19 +294,16 @@ describe('Testes com Serviços', () => {
             .send(dataToUpdate)
             .end((err, res) => {
               res.should.have.status(400);
-              res.body.status.should.eql("fail");
+              res.body.status.should.eql('fail');
 
               done();
             });
         });
     });
-
   });
 
-  describe('Remoção', () => { //DELETE
-    beforeEach(() => {
-      return clearDB();
-    });
+  describe('Remoção', () => { // DELETE
+    beforeEach(() => clearDB());
 
     it('Deve apagar um Serviço já inserido e retornar OK', (done) => {
       mockObjects.createValidService()
@@ -325,7 +324,7 @@ describe('Testes com Serviços', () => {
         .end((err, res) => {
           res.should.have.status(400);
           done();
-        });        
+        });
     });
 
     it('Deve falhar com um 404 para um Serviço inexistente', (done) => {
@@ -335,7 +334,7 @@ describe('Testes com Serviços', () => {
         .end((err, res) => {
           res.should.have.status(404);
           done();
-        });        
+        });
     });
   });
 });
@@ -344,23 +343,22 @@ describe('Testes com Requisições', () => {
   describe('Listagem', () => {
 
   });
-  describe('Criação', () => { //CREATE
-    beforeEach(() => {
-      return clearDB();
-    });
+  describe('Criação', () => { // CREATE
+    beforeEach(() => clearDB());
 
     it('Deve aceitar a criação de uma Requisição gerada corretamente', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
           mockObjects.getValidRequest()
             .then((generatedRequest) => {
-              generatedRequest.serviceId = insertedService._id;
-              return generatedRequest;
+              const newRequest = generatedRequest;
+              newRequest.serviceId = insertedService._id;
+              return newRequest;
             })
-            .then((generatedRequest) => {
+            .then((newRequest) => {
               chai.request(server)
                 .post(API_REQUESTS_BASE_URL)
-                .send(generatedRequest)
+                .send(newRequest)
                 .end((err, res) => {
                   res.should.have.status(201);
                   done();
@@ -392,7 +390,7 @@ describe('Testes com Requisições', () => {
     it('Não deve aceitar a criação de uma Requisição inválida, mesmo com Serviço existente', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
-          let invalidRequest = mockObjects.getInvalidRequest();
+          const invalidRequest = mockObjects.getInvalidRequest();
           invalidRequest.serviceId = insertedService._id;
           chai.request(server)
             .post(API_REQUESTS_BASE_URL)
@@ -407,7 +405,7 @@ describe('Testes com Requisições', () => {
     it('Não deve aceitar a criação de uma Requisição inválida, mesmo com Serviço existente (2)', (done) => {
       mockObjects.createValidService()
         .then((insertedService) => {
-          let invalidRequest = mockObjects.getInvalidRequest(2);
+          const invalidRequest = mockObjects.getInvalidRequest(2);
           invalidRequest.serviceId = insertedService._id;
           chai.request(server)
             .post(API_REQUESTS_BASE_URL)
@@ -420,34 +418,32 @@ describe('Testes com Requisições', () => {
     });
   });
 
-  describe('Visualização', () => { //READ
-    beforeEach(() => {
-      return clearDB();
-    });
+  describe('Visualização', () => { // READ
+    beforeEach(() => clearDB());
 
     it('Deve retornar corretamente uma Requisição criada', (done) => {
       mockObjects.createValidService()
         .then(mockObjects.createValidRequest)
-        .then((validRequest)=>{
+        .then((validRequest) => {
           chai.request(server)
-            .get(`${API_REQUESTS_BASE_URL}/${validRequest._id}`)            
+            .get(`${API_REQUESTS_BASE_URL}/${validRequest._id}`)
             .end((err, res) => {
               res.should.have.status(200);
-              res.body.status.should.eql("success");
-              let createdRequest = res.body.data;
-              createdRequest.should.be.an("object");
+              res.body.status.should.eql('success');
+              const createdRequest = res.body.data;
+              createdRequest.should.be.an('object');
 
               /* CAMPOS OBRIGATÓRIOS */
               createdRequest.should.have.property('service');
               createdRequest.should.have.property('data');
-              createdRequest.data.should.be.an("object");
+              createdRequest.data.should.be.an('object');
               createdRequest.data.should.not.eql({});
-              
+
               createdRequest.should.have.property('notifications');
-              createdRequest.notifications.should.be.an("array");
+              createdRequest.notifications.should.be.an('array');
               createdRequest.notifications.should.not.eql([]);
 
-              createdRequest.should.have.property('status', validRequest.status);              
+              createdRequest.should.have.property('status', validRequest.status);
 
               /* TIMESTAMPS */
               Date.parse(createdRequest.updatedAt).should.be.eql(validRequest.updatedAt.getTime());
@@ -460,7 +456,7 @@ describe('Testes com Requisições', () => {
               createdRequest.should.not.have.property('__v');
 
               done();
-            });          
+            });
         });
     });
   });
