@@ -88,6 +88,7 @@ const serviceController = () => {
       category: req.body.category,
       sa_category: req.body.sa_category,
       published: req.body.published,
+      notifications: req.body.notifications,
       /** @todo incluir os timestamps enviados pela requisição ou usar os gerados automaticamente
        * pelo MongoDB? */
     });

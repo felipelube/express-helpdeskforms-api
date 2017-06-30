@@ -87,19 +87,19 @@ const mockObjects = () => {
         to: 'atendimento@prodest.es.gov.br',
         from: 'teste@example.com',
         body: ['%CATEGORY=${service.sa_category}',
-          '%PARENT=${form.parentSA}',
-          '%SUMMARY=${summary} - ${dbName}',
-          '%DESCRIPTION=Breve descrição do que o script vai fazer: ${form.summary}',
-          'SGDB (Oracle/SQL Server): ${form.sgdb}',
-          'Nome do banco: ${form.dbName}',
-          'Ambiente (Desenvolvimento, Teste, Treinamento, Homologação ou Produção): ${form.environment}',
-          'Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? ${form.scriptsCreateObjects}',
-          "É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? ${form.backupNeeded ? 'Sim, '+ form.backupRetentionPeriod :'Não'}",
-          'Data e hora para execução dos scripts: ${form.backupRetentionPeriod}',
-          "Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? ${form.dependentSA ? 'Sim, '+ form.dependentSA :'Não'}",
-          'Instruções adicionais para execução ou outras informações: ${form.additionalInfo} ',
+          '%PARENT=${request.data.parentSA}',
+          '%SUMMARY=${request.data.summary} - ${request.data.dbName}',
+          '%DESCRIPTION=Breve descrição do que o script vai fazer: ${request.data.summary}',
+          'SGDB (Oracle/SQL Server): ${request.data.sgdb}',
+          'Nome do banco: ${request.data.dbName}',
+          'Ambiente (Desenvolvimento, Teste, Treinamento, Homologação ou Produção): ${request.data.environment}',
+          'Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? ${request.data.scriptsCreateObjects}',
+          "É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? ${request.data.backupNeeded ? 'Sim, '+ request.data.backupRetentionPeriod :'Não'}",
+          'Data e hora para execução dos scripts: ${request.data.backupRetentionPeriod}',
+          "Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? ${request.data.dependentSA ? 'Sim, '+ request.data.dependentSA :'Não'}",
+          'Instruções adicionais para execução ou outras informações: ${request.data.additionalInfo} ',
         ].join(),
-        subject: '${summary} - ${dbName}',
+        subject: '${service.sa_category} - ${request.data.summary} - ${request.data.dbName}',
         attachments: [],
         /** @todo DÚVIDA: o conteúdo dos anexos retirado da leitura de um
                  arquivo enviado enviado pelo cliente para uma api de hospedagem; ou não anexar
@@ -126,7 +126,7 @@ const mockObjects = () => {
     },
     notifications: [{
       notificationType: 'email',
-      formatedData: {
+      data: {
         to: 'atendimento@prodest.es.gov.br',
         from: 'teste@example.com',
         body: ` %CATEGORY=Banco de dados.manutenção

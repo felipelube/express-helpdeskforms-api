@@ -45,7 +45,7 @@ const requestSchema = new Schema({
       enum: NOTIFICATION_TYPES,
       required: true,
     },
-    formatedData: { // os dados da notificação formatados, prontos para serem enviados
+    data: { // os dados da notificação formatados, prontos para serem enviados
       type: Object,
       required: true,
     },

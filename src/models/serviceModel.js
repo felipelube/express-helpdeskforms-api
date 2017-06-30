@@ -34,6 +34,10 @@ const serviceSchema = new Schema({
     type: String,
     required: true,
   },
+  notifications: {
+    type: Array,
+    required: true,
+  },
   published: { // publicado: se o serviço está disponível para ser requisitado ou não
     type: Boolean,
     required: true,
