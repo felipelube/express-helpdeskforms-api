@@ -30,8 +30,8 @@ const NOTIFICATION_TYPES = ['email'];
  *       requisição for salva (hook save)
  */
 const requestSchema = new Schema({
-  serviceId: {
-    type: Schema.ObjectId, // o serviço que esta requisição solicita
+  service_name: {
+    type: String,
     required: true,
   },
   data: { // os dados da requisição no formato do formulário do serviço
@@ -40,7 +40,7 @@ const requestSchema = new Schema({
   },
   /* as notificações programadas/feitas, com dados formatados ou aguardando formatação */
   notifications: [{
-    notificationType: { // o tipo da notificação
+    type: { // o tipo da notificação
       type: String,
       enum: NOTIFICATION_TYPES,
       required: true,
@@ -63,7 +63,7 @@ const requestSchema = new Schema({
       },
       changed: [ // um histórico de status
         {
-          statusName: {
+          status_name: {
             type: String,
             enum: NOTFICATION_STATUSES,
             required: true,
@@ -91,31 +91,15 @@ const requestSchema = new Schema({
  * MÉTODOS E FUNÇÕES */
 
 /**
- * @function getServiceInfo
+ * @function getRequestInfo
  * @desc retorna a instância de Service pronta para ser exibida ao usuário
  * final, escondendo detalhes internos.
  * @todo otimizar
  */
-function getServiceInfo() {
-  const request = this.toJSON();
-  return Service
-    .findById(request.serviceId).exec()
-    .then((service) => {
-      let result = request;
-
-      if (!service) {
-        result.service = '<deleted>';
-      } else {
-        result.service = service.machine_name;
-      }
-
-      result = _.omit(request, ['__v', '_id', 'serviceId']);
-
-      return result;
-    })
-    .catch((err) => {
-      throw new Boom.badImplementation(err.message);
-    });
+function getRequestInfo() {
+  let request = this.toJSON();
+  request = _.omit(request, ['__v', '_id']);
+  return Promise.resolve(request);
 }
 
 /**
@@ -145,12 +129,12 @@ function getIdSchema() {
 }
 
 /**
- * @desc retorna o schema para determinado Serviço (serviceId),
+ * @desc retorna o schema para determinado Serviço (service_name),
  * que uma Requisição válida para aquele Serviço deve respeitar
  */
-function getDataSchema(serviceId) {
+function getDataSchema(serviceName) {
   return Service
-    .findById(serviceId).exec()
+    .findOne({ machine_name: serviceName })
     .then((service) => {
       let formSchema;
       try {
@@ -182,6 +166,6 @@ requestSchema.statics.getJSONSchema = getJSONSchema;
 requestSchema.statics.getIdSchema = getIdSchema;
 requestSchema.statics.getDataSchema = getDataSchema;
 requestSchema.statics.getUpdatableProperties = getUpdatableProperties; /** @todo memoizar? */
-requestSchema.methods.getInfo = getServiceInfo;
+requestSchema.methods.getInfo = getRequestInfo;
 
 module.exports = mongoose.model('Request', requestSchema);

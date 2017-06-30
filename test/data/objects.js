@@ -27,9 +27,9 @@ const mockObjects = () => {
           enum: ['Oracle', 'SQL Server'],
           description: 'SGDB',
         },
-        dbName: {
+        db_name: {
           type: 'string',
-          id: '/properties/dbName',
+          id: '/properties/db_name',
           pattern: /(?=\s*\S).*/,
           description: 'Nome do banco',
         },
@@ -39,35 +39,35 @@ const mockObjects = () => {
           enum: ['Produção', 'Homologação', 'Desenvolvimento'],
           description: 'Ambiente',
         },
-        scriptsCreateObjects: {
+        scripts_create_objects: {
           type: 'boolean',
-          id: '/properties/scriptsCreateObjects',
+          id: '/properties/scripts_create_objects',
           description: 'Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)',
         },
-        backupNeeded: {
+        backup_needed: {
           type: 'boolean',
-          id: '/properties/backupNeeded',
+          id: '/properties/backup_needed',
           description: 'É necesário fazer backup do banco de dados antes da execução do script',
         },
-        backupRetentionPeriod: {
+        backup_retention_period: {
           type: 'number',
-          id: '/properties/backupRetentionPeriod',
+          id: '/properties/backup_retention_period',
           description: 'Prazo de retenção do backup',
         },
-        executionDateTime: {
+        execution_date_time: {
           type: 'string',
-          id: '/properties/executionDateTime',
+          id: '/properties/execution_date_time',
           format: 'date-time',
           description: 'Data e hora para execução dos scripts',
         },
-        dependentSA: {
+        dependent_sa: {
           type: 'number',
-          id: '/properties/dependentSA',
+          id: '/properties/dependent_sa',
           description: 'Depende de outra SA ou procedimento para ser executado',
         },
-        additionalInfo: {
+        additional_info: {
           type: 'string',
-          id: '/properties/additionalInfo',
+          id: '/properties/additional_info',
           pattern: /(?=\s*\S).*/,
           description: 'Instruções adicionais para execução ou outras informações',
         },
@@ -75,31 +75,31 @@ const mockObjects = () => {
       required: [
         'summary',
         'sgdb',
-        'dbName',
+        'db_name',
         'environment',
-        'scriptsCreateObjects',
-        'backupNeeded',
+        'scripts_create_objects',
+        'backup_needed',
       ],
     },
     notifications: [{
-      notificationType: 'email',
-      dataFormat: {
+      type: 'email',
+      data_format: {
         to: 'atendimento@prodest.es.gov.br',
         from: 'teste@example.com',
         body: ['%CATEGORY=${service.sa_category}',
-          '%PARENT=${request.data.parentSA}',
-          '%SUMMARY=${request.data.summary} - ${request.data.dbName}',
+          '%PARENT=${request.data.parent_sa}',
+          '%SUMMARY=${request.data.summary} - ${request.data.db_name}',
           '%DESCRIPTION=Breve descrição do que o script vai fazer: ${request.data.summary}',
           'SGDB (Oracle/SQL Server): ${request.data.sgdb}',
-          'Nome do banco: ${request.data.dbName}',
+          'Nome do banco: ${request.data.db_name}',
           'Ambiente (Desenvolvimento, Teste, Treinamento, Homologação ou Produção): ${request.data.environment}',
-          'Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? ${request.data.scriptsCreateObjects}',
-          "É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? ${request.data.backupNeeded ? 'Sim, '+ request.data.backupRetentionPeriod :'Não'}",
-          'Data e hora para execução dos scripts: ${request.data.backupRetentionPeriod}',
-          "Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? ${request.data.dependentSA ? 'Sim, '+ request.data.dependentSA :'Não'}",
-          'Instruções adicionais para execução ou outras informações: ${request.data.additionalInfo} ',
+          'Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? ${request.data.scripts_create_objects? "Sim": "Não"}',
+          "É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? ${request.data.backup_needed ? 'Sim, '+ request.data.backup_retention_period :'Não'}",
+          'Data e hora para execução dos scripts: ${request.data.backup_retention_period}',
+          "Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? ${request.data.dependent_sa ? 'Sim, '+ request.data.dependent_sa :'Não'}",
+          'Instruções adicionais para execução ou outras informações: ${request.data.additional_info} ',
         ].join(),
-        subject: '${service.sa_category} - ${request.data.summary} - ${request.data.dbName}',
+        subject: '${service.sa_category} - ${request.data.summary} - ${request.data.db_name}',
         attachments: [],
         /** @todo DÚVIDA: o conteúdo dos anexos retirado da leitura de um
                  arquivo enviado enviado pelo cliente para uma api de hospedagem; ou não anexar
@@ -117,15 +117,15 @@ const mockObjects = () => {
     data: {
       summary: 'Este script é apenas um teste para o nosso sistema',
       sgdb: 'Oracle',
-      dbName: 'BD_TESTE',
+      db_name: 'BD_TESTE',
       environment: 'Produção',
-      scriptsCreateObjects: false,
-      backupNeeded: false,
-      executionDateTime: new Date(),
-      parentSA: 288987,
+      scripts_create_objects: false,
+      backup_needed: false,
+      execution_date_time: new Date(),
+      parent_sa: 288987,
     },
     notifications: [{
-      notificationType: 'email',
+      type: 'email',
       data: {
         to: 'atendimento@prodest.es.gov.br',
         from: 'teste@example.com',
@@ -149,7 +149,7 @@ const mockObjects = () => {
       status: {
         status: 'awaitingSending',
         changed: [{
-          statusName: 'awaitingSending',
+          status_name: 'awaitingSending',
           timestamp: new Date(),
         }],
       },
@@ -196,15 +196,15 @@ const mockObjects = () => {
       throw err;
     });
 
-  const createValidRequest = serviceId => getValidRequest()
+  const createValidRequest = serviceName => getValidRequest()
     .then((generatedRequest) => {
       let createdRequest = generatedRequest;
-      if (typeof (serviceId) === 'string') {
-        createdRequest.serviceId = serviceId;
-      } else if (typeof (serviceId) === 'object' && serviceId._id) {
-        createdRequest.serviceId = serviceId._id;
+      if (typeof (serviceName) === 'string') {
+        createdRequest.service_name = serviceName;
+      } else if (typeof (serviceName) === 'object' && serviceName.machine_name) {
+        createdRequest.service_name = serviceName.machine_name;
       } else {
-        throw new Error('Invalid serviceId');
+        throw new Error('Invalid serviceName');
       }
       createdRequest = new Request(createdRequest);
       return createdRequest.save();
@@ -214,19 +214,18 @@ const mockObjects = () => {
     });
   const getInvalidRequest = (requestIndex = 0) => {
     const invalidRequests = [{
-      serviceId: true,
       data: {},
       notifications: [],
       status: 'nova',
     },
     {
-      serviceId: '507f191e810c19729de860ea',
+      service_name: '507f191e810c19729de860ea',
       data: {},
       notifications: [],
       status: 'nova',
     },
     {
-      serviceId: '507f191e810c19729de860ea',
+      service_name: '507f191e810c19729de860ea',
       data: {},
       notifications: [],
       status: 'new',

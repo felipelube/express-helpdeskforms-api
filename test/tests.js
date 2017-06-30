@@ -352,7 +352,7 @@ describe('Testes com Requisições', () => {
           mockObjects.getValidRequest()
             .then((generatedRequest) => {
               const newRequest = generatedRequest;
-              newRequest.serviceId = insertedService._id;
+              newRequest.service_name = insertedService.machine_name;
               return newRequest;
             })
             .then((newRequest) => {
@@ -367,7 +367,7 @@ describe('Testes com Requisições', () => {
         });
     });
 
-    it('Não deve aceitar a criação de uma Requisição sem serviceId', (done) => {
+    it('Não deve aceitar a criação de uma Requisição sem service_name', (done) => {
       chai.request(server)
         .post(API_REQUESTS_BASE_URL)
         .send(mockObjects.getInvalidRequest())
@@ -391,7 +391,7 @@ describe('Testes com Requisições', () => {
       mockObjects.createValidService()
         .then((insertedService) => {
           const invalidRequest = mockObjects.getInvalidRequest();
-          invalidRequest.serviceId = insertedService._id;
+          invalidRequest.service_name = insertedService.machine_name;
           chai.request(server)
             .post(API_REQUESTS_BASE_URL)
             .send(invalidRequest)
@@ -406,7 +406,7 @@ describe('Testes com Requisições', () => {
       mockObjects.createValidService()
         .then((insertedService) => {
           const invalidRequest = mockObjects.getInvalidRequest(2);
-          invalidRequest.serviceId = insertedService._id;
+          invalidRequest.service_name = insertedService.machine_name;
           chai.request(server)
             .post(API_REQUESTS_BASE_URL)
             .send(invalidRequest)
@@ -434,7 +434,7 @@ describe('Testes com Requisições', () => {
               createdRequest.should.be.an('object');
 
               /* CAMPOS OBRIGATÓRIOS */
-              createdRequest.should.have.property('service');
+              createdRequest.should.have.property('service_name');
               createdRequest.should.have.property('data');
               createdRequest.data.should.be.an('object');
               createdRequest.data.should.not.eql({});
@@ -452,7 +452,6 @@ describe('Testes com Requisições', () => {
               /* CAMPOS QUE NÃO DEVEM SER EXIBIDOS */
               createdRequest.should.not.have.property('_id');
               createdRequest.should.not.have.property('id');
-              createdRequest.should.not.have.property('serviceId');
               createdRequest.should.not.have.property('__v');
 
               done();

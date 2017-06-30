@@ -1,6 +1,5 @@
 const _ = require('underscore');
 const Boom = require('boom');
-const mongoose = require('mongoose');
 const { validate } = require('express-jsonschema');
 
 const Request = require('../models/requestModel');
@@ -18,7 +17,8 @@ const requestsController = () => {
       .find()
       .then((rawRequests) => {
         if (!rawRequests || rawRequests.length === 0) {
-          throw new Boom.notFound();
+          res.jsend.success([]);
+          return;
         }
         const getRequestsInfo = [];
         rawRequests.forEach((request) => {
@@ -38,19 +38,18 @@ const requestsController = () => {
    * para o Serviço dessa Requisição.
    */
   const validateRequest = (req, res, next) => {
-    if (!req.body.serviceId ||
-      !mongoose.Types.ObjectId.isValid(req.body.serviceId)) {
-      throw new Boom.badRequest('Missing/invalid serviceId');
+    if (!req.body.service_name) {
+      throw new Boom.badRequest('Missing service_name');
     }
     Service
-      .findById(req.body.serviceId).exec()
+      .findOne({ machine_name: req.body.service_name })
       .then((service) => {
         if (!service) {
           throw new Boom.notFound('Service for this Request does not exist');
         }
         try {
           const basicRequestInfoSchema = Request.getJSONSchema();
-          Request.getDataSchema(req.body.serviceId) /** @todo otimizar */
+          Request.getDataSchema(req.body.service_name) /** @todo otimizar */
             .then(requestDataSchema => validate({ body: basicRequestInfoSchema },
               [requestDataSchema])(req, res, next))
             .catch(next);
@@ -69,7 +68,7 @@ const requestsController = () => {
    */
   const insert = (req, res, next) => {
     const newRequest = new Request({
-      serviceId: req.body.serviceId,
+      service_name: req.body.service_name,
       data: req.body.data,
       notifications: req.body.notifications,
       status: 'new',
@@ -138,7 +137,7 @@ const requestsController = () => {
       .findByIdAndUpdate(req.request.id, req.request.udpateData)
       .then((request) => {
         if (!request) {
-          throw new Boom.notFound();
+          throw new Boom.notFound('Request not found');
         }
         return request
           .getInfo()
