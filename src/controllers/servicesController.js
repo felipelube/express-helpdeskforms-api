@@ -1,4 +1,4 @@
-const _ = require('underscore');
+const _ = require('lodash');
 const Boom = require('boom');
 const { validate } = require('express-jsonschema');
 

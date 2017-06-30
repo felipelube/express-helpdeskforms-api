@@ -1,6 +1,6 @@
 const Boom = require('boom');
 const mongoose = require('mongoose');
-const _ = require('underscore');
+const _ = require('lodash');
 const Service = require('./serviceModel');
 
 require('mongoose-schema-jsonschema')(mongoose);

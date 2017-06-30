@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const _ = require('underscore');
+const _ = require('lodash');
 
 
 require('mongoose-schema-jsonschema')(mongoose);
