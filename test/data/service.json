@@ -1,0 +1,80 @@
+{
+  "machine_name": "bd_maintenance",
+  "name": "Manutenção em Banco de Dados",
+  "description": "Trata-se da execução de scripts paara a criação e objetos \\n      (tabelas, índices, funções), execução de procedures para manipulação de dados \\n      (carga, atualização ou deleção) e também de solicitações como criação de sinônimos, \\n      concessão de privilégios para usuários da aplicação e criação/agendamento de Jobs. \\n      Geralmente solicitado pela GESIN ou GEINF e usuários externos. <b>Os scripts deverão \\n      ser anexados à SA.</b>",
+  "form": {
+    "type": "object",
+    "properties": {
+      "summary": {
+        "type": "string",
+        "id": "/properties/summary",
+        "pattern": {},
+        "description": "Breve descrição do que o script vai fazer"
+      },
+      "sgdb": {
+        "type": "string",
+        "id": "/properties/sgdb",
+        "enum": ["Oracle", "SQL Server"],
+        "description": "SGDB"
+      },
+      "db_name": {
+        "type": "string",
+        "id": "/properties/db_name",
+        "pattern": {},
+        "description": "Nome do banco"
+      },
+      "environment": {
+        "type": "string",
+        "id": "/properties/environment",
+        "enum": ["Produção", "Homologação", "Desenvolvimento"],
+        "description": "Ambiente"
+      },
+      "scripts_create_objects": {
+        "type": "boolean",
+        "id": "/properties/scripts_create_objects",
+        "description": "Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)"
+      },
+      "backup_needed": {
+        "type": "boolean",
+        "id": "/properties/backup_needed",
+        "description": "É necesário fazer backup do banco de dados antes da execução do script"
+      },
+      "backup_retention_period": {
+        "type": "number",
+        "id": "/properties/backup_retention_period",
+        "description": "Prazo de retenção do backup"
+      },
+      "execution_date_time": {
+        "type": "string",
+        "id": "/properties/execution_date_time",
+        "format": "date-time",
+        "description": "Data e hora para execução dos scripts"
+      },
+      "dependent_sa": {
+        "type": "number",
+        "id": "/properties/dependent_sa",
+        "description": "Depende de outra SA ou procedimento para ser executado"
+      },
+      "additional_info": {
+        "type": "string",
+        "id": "/properties/additional_info",
+        "pattern": {},
+        "description": "Instruções adicionais para execução ou outras informações"
+      }
+    },
+    "required": ["summary", "sgdb", "db_name", "environment", "scripts_create_objects", "backup_needed"]
+  },
+  "notifications": [{
+    "type": "email",
+    "data_format": {
+      "to": "atendimento@prodest.es.gov.br",
+      "from": "teste@example.com",
+      "body": "%CATEGORY=${service.sa_category},%PARENT=${request.data.parent_sa},%SUMMARY=${request.data.summary} - ${request.data.db_name},%DESCRIPTION=Breve descrição do que o script vai fazer: ${request.data.summary},SGDB (Oracle/SQL Server): ${request.data.sgdb},Nome do banco: ${request.data.db_name},Ambiente (Desenvolvimento, Teste, Treinamento, Homologação ou Produção): ${request.data.environment},Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? ${request.data.scripts_create_objects? \"Sim\": \"Não\"},É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? ${request.data.backup_needed ? \"Sim, \"+ request.data.backup_retention_period :\"Não\"},Data e hora para execução dos scripts: ${request.data.backup_retention_period},Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? ${request.data.dependent_sa ? \"Sim, \"+ request.data.dependent_sa :\"Não\"},Instruções adicionais para execução ou outras informações: ${request.data.additional_info} ",
+      "subject": "${service.sa_category} - ${request.data.summary} - ${request.data.db_name}",
+      "attachments": []
+    }
+  }],
+  "category": "Banco de dados",
+  "sa_category": "Banco de dados.manutenção",
+  "published": true
+}
