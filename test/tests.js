@@ -25,21 +25,6 @@ const clearDB = () => Promise.all([
   Request.remove().exec(),
 ]);
 
-const simplePostStatusTest = (desc, url, objectToSend, statusRequired) => {
-  it(desc, (done) => {
-    Promise.resolve(objectToSend)
-      .then((object) => {
-        chai.request(server)
-          .post(url)
-          .send(object)
-          .end((err, res) => {
-            res.should.have.status(statusRequired);
-            done();
-          });
-      });
-  });
-};
-
 describe('Testes com Serviços', () => {
   describe('Listagem', () => {
 
@@ -47,14 +32,37 @@ describe('Testes com Serviços', () => {
   describe('Criação', () => { // CREATE
     beforeEach(clearDB);
 
-    const servicesPostTests = [
-      { desc: 'Deve aceitar a criação de um Serviço gerado corretamente', send: mockObjects.getValidService(), status: 201 },
-      { desc: 'Não deve aceitar um Serviço inválido', send: mockObjects.getInvalidService(), status: 400 },
-      { desc: 'Não deve aceitar um Serviço vazio', send: {}, status: 400 },
-    ];
+    it('Deve aceitar a criação de um Serviço gerado corretamente', (done) => {
+      mockObjects.getValidService()
+        .then((generatedService) => {
+          chai.request(server)
+            .post(API_SERVICES_BASE_URL)
+            .send(generatedService)
+            .end((err, res) => {
+              res.should.have.status(201);
+              done();
+            });
+        });
+    });
 
-    servicesPostTests.forEach((test) => {
-      simplePostStatusTest(test.desc, API_SERVICES_BASE_URL, test.send, test.status);
+    it('Não deve aceitar um Serviço inválido', (done) => {
+      chai.request(server)
+        .post(API_SERVICES_BASE_URL)
+        .send(mockObjects.getInvalidService())
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
+    });
+
+    it('Não deve aceitar um Serviço vazio', (done) => {
+      chai.request(server)
+        .post(API_SERVICES_BASE_URL)
+        .send({})
+        .end((err, res) => {
+          res.should.have.status(400);
+          done();
+        });
     });
 
     it('Deve validar as propriedades antes de inserir', (done) => {
