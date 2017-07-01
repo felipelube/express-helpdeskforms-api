@@ -32,7 +32,7 @@ const apiResponses = () => {
     const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
     const err = new Boom.notFound(`${url} not found`);
 
-    res.status = 404;
+    res.status(404);
 
     logger.debug(err);
     if (req.accepts('json')) {

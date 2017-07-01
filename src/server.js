@@ -17,8 +17,6 @@ if (process.env.NODE_ENV === 'test') {
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-logger.level = config.logLevel;
-
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -28,7 +26,7 @@ app.use(jsend.middleware);
 app.use('/api/v1', apiRouter);
 
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('tiny'));
+  app.use(morgan('dev'));
 }
 
 // Tudo começa com uma conexão ao banco de dados...

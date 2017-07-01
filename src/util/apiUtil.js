@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const winston = require('winston');
 const secrets = require('../config/secrets/secrets');
+const config = require('config');
 
 const apiUtil = () => {
   const jwtCreateToken = account => new Promise((resolve, reject) => {
@@ -20,11 +21,13 @@ const apiUtil = () => {
   });
 
   const logger = new winston.Logger({
+    level: config.logLevel,
     transports: [
       /** @todo create a custom formater that play nice with stack traces */
-      new winston.transports.Console(),
+      new (winston.transports.Console)(),
     ],
   });
+  logger.cli();
 
   return {
     logger,
