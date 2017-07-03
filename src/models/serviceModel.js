@@ -6,6 +6,7 @@ require('mongoose-schema-jsonschema')(mongoose);
 
 const Schema = mongoose.Schema;
 
+const NOTIFICATION_TYPES = ['email']; /** @todo mesclar com essa constante no modelo de Requisições */
 /**
  * SCHEMA
  * @desc o schema para o modelo Serviço
@@ -34,10 +35,14 @@ const serviceSchema = new Schema({
     type: String,
     required: true,
   },
-  notifications: {
-    type: Array,
-    required: true,
-  },
+  notifications: [{
+    type: {
+      type: String,
+      enum: NOTIFICATION_TYPES,
+      required: true,
+    },
+    data_format: {},
+  }],
   published: { // publicado: se o serviço está disponível para ser requisitado ou não
     type: Boolean,
     required: true,
