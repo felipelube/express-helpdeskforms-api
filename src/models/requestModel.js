@@ -16,11 +16,25 @@ const NOTFICATION_STATUSES = [
 ];
 const REQUEST_STATUSES = [
   'new', // requisição nova, status padrão
-  'notificationsScheduled', // todas notificações enviadas para o agendador
+  'sentToScheduler', // todas notificações enviadas para o agendador
+  'notificationsProcessed', // todas notificações enviadas para o agendador
   'notificationsSent', // todas notificações enviadas
-  'caInfoReceived', // informações do CA recebidas
+  'caOpened', // A SA foi aberta no CA (recebida a notificação de abertura)
+  'caPaused', // A SA foi pausada no CA (recebida a notificação de pendência do cliente)
+  'caClosed', // A SA foi fechada no CA (recebida a notificação de fechamento)
 ];
 const NOTIFICATION_TYPES = ['email'];
+const CA_SA_STATUSES = [
+  'opened', // Aberta
+  'scheduled', // Agendada
+  'awaiting_child_incident', // Aguardando Inciidente Filho
+  'awaiting_child_request', // Aguardandno Requisição Filha
+  'client_canceled', // Cancelada pelo cliente
+  'in_progress', // Em andamento
+  'closed', // Fechada
+  'client_info_needed', // Pendência do cliente
+  'supplier_info_needed', // Pendência do fornecedor
+];
 
 /**
  * SCHEMA
@@ -83,6 +97,18 @@ const requestSchema = new Schema({
     default: 'new',
     required: true,
   },
+  ca_info: [{
+    sa_status: {
+      type: String,
+      enum: CA_SA_STATUSES,
+      required: true,
+      default: 'unknown',
+    },
+    timestamp: {
+      type: Date,
+      required: true,
+    },
+  }],
 }, {
   timestamps: true,
 });
