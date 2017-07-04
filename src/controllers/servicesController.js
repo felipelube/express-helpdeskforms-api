@@ -53,7 +53,7 @@ const serviceController = () => {
         throw new Boom.badRequest('update data is not valid');
       }
 
-      req.service.udpateData = updateData;
+      req.service.updateData = updateData;
       const partialSchemaForUpdate = Service.getJSONSchema();
       partialSchemaForUpdate.required = _.keys(updateData);
       partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties,
@@ -131,11 +131,12 @@ const serviceController = () => {
    */
   const update = async (req, res, next) => {
     try {
-      const service = await Service.findByIdAndUpdate(req.service.id, req.service.udpateData);
+      const service = await Service.findByIdAndUpdate(req.service.id, req.service.updateData,
+        { new: true });
       if (!service) {
         throw new Boom.notFound('service not found');
       }
-      res.jsend.success(await service.getInfo());
+      res.jsend.success(await service.info());
     } catch (e) {
       next(e);
     }

@@ -14,18 +14,23 @@ const apiResponses = () => {
         error = new Boom.badRequest('Erro na validação dos dados', error.validations);
       }
     }
+
+    if (error instanceof Boom.notFound) {
+      return next(error); // o próximo middleware é especialista em 404s
+    }
+
     res
       .status(error.output.statusCode)
       .set(error.output.headers);
 
     logger.debug(error);
     if (error.isServer) { // erros http 5x são 'erros 'jsend
-      return next(res.jsend.error(error.message, {
+      return res.jsend.error(error.message, {
         code: error.output.statusCode,
         data: error.data,
-      }));
+      });
     }
-    return next(res.jsend.fail(error.data || error.message)); // outros erros são 'falhas' jsend
+    return res.jsend.fail(error.data || error.message); // outros erros são 'falhas' jsend
   };
 
   const default404Response = (req, res, next) => {
