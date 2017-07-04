@@ -4,7 +4,8 @@
   "description": "Sistema para criação de Serviços e Requisições de Serviço, que serão enviadas para o CA Service Desk em forma de Solicitações/Incidentes",
   "main": "./src/server.js",
   "scripts": {
-    "test": "gulp test"
+    "test": "gulp test",
+    "server": "gulp"
   },
   "author": "Felipe Lube de Bragança <felipe.lubra@gmail.com>",
   "license": "ISC",

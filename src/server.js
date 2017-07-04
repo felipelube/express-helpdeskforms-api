@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'test') {
   global.Promise.longStackTraces();
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = config.port || 8000;
 const app = express();
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -31,9 +31,9 @@ if (process.env.NODE_ENV !== 'test') {
 mongoose.Promise = Promise;
 
 mongoose
-  .connect(config.dbUri)
+  .connect(config.db_uri)
   .then(() => {
-    logger.info(`Banco de dados conectado em ${config.dbUri}`);
+    logger.info(`Banco de dados conectado em ${config.db_uri}`);
 
     app.use(exceptionToJsendResponse); // nosso tratador de erros
     app.use('*', default404Response); // faz-tudo para 404s

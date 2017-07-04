@@ -60,4 +60,4 @@ typings/
 .vscode
 
 #arquivo com tokens de api e outras informações sensíveis que não devem sincronizar no repositório
-src/config/secrets.json
+src/config/secrets/*

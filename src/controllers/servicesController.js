@@ -13,7 +13,7 @@ const serviceController = () => {
   const listAll = async (req, res, next) => {
     try {
       let services = await Service.find({ published: true });
-      services = services.map(async service => service.getInfo());
+      services = services.map(service => service.info());
       res.jsend.success(services);
     } catch (e) {
       next(e);

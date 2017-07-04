@@ -14,9 +14,13 @@ const requestsController = () => {
    */
   const listAll = async (req, res, next) => {
     try {
-      let requests = await Request.find();
-      requests = requests.map(async request => request.getInfo());
-      res.jsend.success(requests);
+      const requests = await Request.find();
+      let requestsForResult = [];
+      _.forEach(requests, async (request) => {
+        requestsForResult.push(request.getInfo());
+      });
+      requestsForResult = await Promise.all(requestsForResult);
+      res.jsend.success(requestsForResult);
     } catch (e) {
       next(e);
     }
