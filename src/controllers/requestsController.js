@@ -12,23 +12,14 @@ const requestsController = () => {
    * @todo listar apenas as Requisições do usuário
    * @todo para um usuário gestor, listar apenas as Requisições do órgão
    */
-  const listAll = (req, res, next) => {
-    Request
-      .find()
-      .then((rawRequests) => {
-        if (!rawRequests || rawRequests.length === 0) {
-          res.jsend.success([]);
-          return;
-        }
-        const getRequestsInfo = [];
-        rawRequests.forEach((request) => {
-          getRequestsInfo.push(request.getInfo());
-        });
-        Promise
-          .all(getRequestsInfo)
-          .then(requestsInfo => res.jsend.success(requestsInfo));
-      })
-      .catch(next);
+  const listAll = async (req, res, next) => {
+    try {
+      let requests = await Request.find();
+      requests = requests.map(async request => request.getInfo());
+      res.jsend.success(requests);
+    } catch (e) {
+      next(e);
+    }
   };
 
   /**
@@ -37,27 +28,21 @@ const requestsController = () => {
    * uma função de validação que considera o JSON Schema geral para toda Requisição e o específico
    * para o Serviço dessa Requisição.
    */
-  const validateRequest = (req, res, next) => {
-    if (!req.body.service_name) {
-      throw new Boom.badRequest('Missing service_name');
+  const validateRequest = async (req, res, next) => {
+    try {
+      if (!req.body.service_name) {
+        throw new Boom.badRequest('Missing service_name');
+      }
+      const service = await Service.findOne({ machine_name: req.body.service_name });
+      if (!service) {
+        throw new Boom.notFound('Service for this Request does not exist');
+      }
+      const basicRequestInfoSchema = Request.getJSONSchema();
+      const requestDataSchema = await Request.getDataSchema(service.machine_name);
+      return validate({ body: basicRequestInfoSchema }, [requestDataSchema])(req, res, next);
+    } catch (e) {
+      return next(e);
     }
-    Service
-      .findOne({ machine_name: req.body.service_name })
-      .then((service) => {
-        if (!service) {
-          throw new Boom.notFound('Service for this Request does not exist');
-        }
-        try {
-          const basicRequestInfoSchema = Request.getJSONSchema();
-          Request.getDataSchema(req.body.service_name) /** @todo otimizar */
-            .then(requestDataSchema => validate({ body: basicRequestInfoSchema },
-              [requestDataSchema])(req, res, next))
-            .catch(next);
-        } catch (e) {
-          throw e;
-        }
-      })
-      .catch(next);
   };
 
   /**
@@ -66,28 +51,27 @@ const requestsController = () => {
    * middleware validateRequest acima. Retorna a Requisição pronta para ser exibida para o usuário
    * final.
    */
-  const insert = (req, res, next) => {
-    const newRequest = new Request({
-      service_name: req.body.service_name,
-      data: req.body.data,
-      notifications: req.body.notifications,
-      status: 'new',
-    });
-    newRequest
-      .save()
-      .then(rawRequest => rawRequest.getInfo())
-      .then((request) => {
-        res
-          .status(201)
-          .jsend
-          .success(request);
-        return request;
-      })
-      /** @todo tente enviar a Requisição para o Agendador...
-         * use os padrões descritos em https://gist.github.com/briancavalier/842626 para tentar
-         * enviar novamente em caso de falha.
-        */
-      .catch(next);
+  const insert = async (req, res, next) => {
+    try {
+      const newRequest = await new Request({
+        service_name: req.body.service_name,
+        data: req.body.data,
+        notifications: req.body.notifications,
+        status: 'new',
+      }).save();
+
+      res
+        .status(201)
+        .jsend
+        .success(await newRequest.getInfo());
+      /**
+       * @todo tente enviar a Requisição para o Agendador...
+       * use os padrões descritos em https://gist.github.com/briancavalier/842626 para tentar
+       * enviar novamente em caso de falha.
+       */
+    } catch (e) {
+      next(e);
+    }
   };
 
   /**
@@ -95,26 +79,30 @@ const requestsController = () => {
    * @desc Filtra as propriedades enviadas para atualização pelo cliente para deixar apenas as
    * permitidas e retorna uma função middleware que valida essas propriedades contra uma versão
    * reduzida a estas propriedades do JSON Schema geral para Requisições.
+   * @todo refatorar
    */
   const validateUpdate = (req, res, next) => {
-    const updatableProperties = Request.getUpdatableProperties();
-    const updateData = _.pick(req.body, updatableProperties);
+    try {
+      const updatableProperties = Request.getUpdatableProperties();
+      const updateData = _.pick(req.body, updatableProperties);
 
-    if (_.size(updateData) === 0) { // cliente passou apenas propriedades não atualizáveis
-      return next(new Boom.badRequest());
+      if (_.size(updateData) === 0) { // cliente passou apenas propriedades não atualizáveis
+        throw new Boom.badRequest('update data is not valid');
+      }
+
+      req.request.udpateData = updateData;
+      const partialSchemaForUpdate = Request.getJSONSchema();
+      partialSchemaForUpdate.required = _.keys(updateData);
+      partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties,
+        _.keys(updateData));
+
+      if (_.size(partialSchemaForUpdate.properties) === 0) {
+        throw new Boom.badRequest('update data is not valid');
+      }
+      return validate({ body: partialSchemaForUpdate })(req, res, next);
+    } catch (e) {
+      return next(e);
     }
-
-    req.request.udpateData = updateData;
-    const partialSchemaForUpdate = Request.getJSONSchema();
-    partialSchemaForUpdate.required = _.keys(updateData);
-    partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties,
-      _.keys(updateData));
-
-    if (_.size(partialSchemaForUpdate.properties) === 0) {
-      return next(new Boom.badRequest());
-    }
-
-    return validate({ body: partialSchemaForUpdate })(req, res, next);
   };
 
   /**
@@ -132,29 +120,28 @@ const requestsController = () => {
    * inseridos na requisição http pelo middleware validateUpdate acima. Retorna a Requisição
    * atualizada e pronta para ser exibido ao usuário final.
    */
-  const update = (req, res, next) => {
-    Request
-      .findByIdAndUpdate(req.request.id, req.request.udpateData)
-      .then((request) => {
-        if (!request) {
-          throw new Boom.notFound('Request not found');
-        }
-        return request
-          .getInfo()
-          .then(info => res.jsend.success(info));
-      })
-      .catch(next);
+  const update = async (req, res, next) => {
+    try {
+      const request = await Request.findByIdAndUpdate(req.request.id, req.request.udpateData);
+      if (!request) {
+        throw new Boom.notFound('Request not found');
+      }
+      res.jsend.success(await request.getInfo());
+    } catch (e) {
+      next(e);
+    }
   };
 
   /**
    * @function view
    * @desc Simplesmente retorna o objeto Requisição pronto para ser exibido ao usuário final
    */
-  const view = (req, res, next) => {
-    req.request
-      .getInfo()
-      .then(info => res.jsend.success(info))
-      .catch(next);
+  const view = async (req, res, next) => {
+    try {
+      res.jsend.success(await req.request.getInfo());
+    } catch (e) {
+      next(e);
+    }
   };
 
   /**
@@ -162,17 +149,17 @@ const requestsController = () => {
    * @desc Middleware que busca e, se achado, insere na requisição o objeto completo da Requisição
    * identificada pelo parâmetro 'id' na URL.
    */
-  const getById = (req, res, next) => {
-    Request
-      .findById(req.params.id)
-      .then((request) => {
-        if (!request) {
-          throw new Boom.notFound('Request not found');
-        }
-        req.request = request;
-        next();
-      })
-      .catch(next);
+  const getById = async (req, res, next) => {
+    try {
+      const request = await Request.findById(req.params.id);
+      if (!request) {
+        throw new Boom.notFound('Request not found');
+      }
+      req.request = request;
+      next();
+    } catch (e) {
+      next(e);
+    }
   };
 
   return {

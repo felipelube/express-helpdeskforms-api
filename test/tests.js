@@ -172,7 +172,7 @@ describe('Testes com Serviços', () => {
     it('Se tudo estiver OK, deve atualizar', (done) => {
       const dataToUpdate = {
         category: 'Banco de dados',
-        sa_category: 'Banco de dados.Manutenção',
+        sa_category: 'Banco de dados.Criação',
       };
 
       mockObjects.createValidService()
