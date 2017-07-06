@@ -1,6 +1,8 @@
 const _ = require('lodash');
 const Boom = require('boom');
 const { validate } = require('express-jsonschema');
+const request = require('requestretry');
+const config = require('config');
 
 const Request = require('../models/requestModel');
 const Service = require('../models/serviceModel');
@@ -64,17 +66,32 @@ const requestsController = () => {
         status: 'new',
       }).save();
 
+      const jsonRequest = await newRequest.getInfo();
+
+      const job = {
+        type: 'preProcessNotifications',
+        data: jsonRequest,
+      };
+
+      /** tente enviar a requisição para o agendador (no máximo 5 vezes) */
+      await request({
+        url: config.HELPDESK_JOB_API_URL,
+        json: job,
+        method: 'POST',
+        retryDelay: 5000,
+        maxAttempts: 5,
+      });
+
       res
         .status(201)
         .jsend
-        .success(await newRequest.getInfo());
-      /**
-       * @todo tente enviar a Requisição para o Agendador...
-       * use os padrões descritos em https://gist.github.com/briancavalier/842626 para tentar
-       * enviar novamente em caso de falha.
-       */
+        .success(jsonRequest);
     } catch (e) {
-      next(e);
+      if (request.RetryStrategies.NetworkError(e)) {
+        next(new Boom.serverUnavailable('servidor de agendamento indisponível'));
+      } else {
+        next(e);
+      }
     }
   };
 

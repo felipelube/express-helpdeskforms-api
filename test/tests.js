@@ -361,12 +361,13 @@ describe('Testes com Requisições', () => {
                 .send(newRequest)
                 .end((err, res) => {
                   res.should.have.status(201);
-                  done();
+                  // dê tempo para o agendador processar esta requisição
+                  setTimeout(done, 10000); 
                 });
             });
         });
     });
-
+    
     it('Não deve aceitar a criação de uma Requisição sem service_name', (done) => {
       chai.request(server)
         .post(API_REQUESTS_BASE_URL)
