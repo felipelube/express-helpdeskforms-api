@@ -30,7 +30,7 @@ gulp.task('test', () => {
   })
     .pipe(mocha({
       reporter: 'spec',
-      timeout: 5000,
+      timeout: 20000,
     }));
 });
 

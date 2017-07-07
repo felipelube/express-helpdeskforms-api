@@ -84,8 +84,8 @@ const mockObjects = () => {
     notifications: [{
       type: 'email',
       data_format: {
-        to: 'atendimento@prodest.es.gov.br',
-        from: 'teste@example.com',
+        to: 'felipe.lubra@gmail.com',
+        from: 'monitoramento@felipelube.com',
         body: ['%CATEGORY=${service.sa_category}',
           '%PARENT=${request.data.parent_sa}',
           '%SUMMARY=${request.data.summary} - ${request.data.db_name}',
@@ -184,34 +184,41 @@ const mockObjects = () => {
     return invalidServices[serviceIndex];
   };
 
-  const createValidService = () => getValidService()
-    .then((generatedService) => {
-      let newService = generatedService;
-      newService.published = true;
-      newService = new Service(newService);
-      return newService.save();
-    })
-    .then(newService => newService.toJSON())
-    .catch((err) => {
-      throw err;
-    });
-
-  const createValidRequest = serviceName => getValidRequest()
-    .then((generatedRequest) => {
-      let createdRequest = generatedRequest;
-      if (typeof (serviceName) === 'string') {
-        createdRequest.service_name = serviceName;
-      } else if (typeof (serviceName) === 'object' && serviceName.machine_name) {
-        createdRequest.service_name = serviceName.machine_name;
-      } else {
-        throw new Error('Invalid serviceName');
+  const createValidService = async () => {
+    let validService = null;
+    try {
+      validService = await getValidService();
+      validService.published = true;
+      validService = await new Service(validService).save();
+      return validService.toJSON();
+    } catch (e) {
+      // já existe serviço com esse machine_name, retorne-o então
+      if (e.code && e.code === 11000 && validService) {
+        const service = await Service.findOne({ machine_name: validService.machine_name });
+        return service.info();
       }
-      createdRequest = new Request(createdRequest);
-      return createdRequest.save();
-    })
-    .catch((err) => {
-      throw err;
-    });
+      throw new Error(`Falha ao tentar criar um Serviço válido: ${e.message}`);
+    }
+  };
+
+  const createValidRequest = async (serviceName) => {
+    try {
+      let validRequest = await getValidRequest();
+      if (typeof (serviceName) === 'string') {
+        validRequest.service_name = serviceName;
+      } else if (typeof (serviceName) === 'object' && serviceName.machine_name) {
+        validRequest.service_name = serviceName.machine_name;
+      } else {
+        throw new Error('serviceName inválido');
+      }
+      validRequest = new Request(validRequest);
+      validRequest = await validRequest.save();
+      return await validRequest.getInfo();
+    } catch (e) {
+      throw new Error(`Falha ao tentar criar uma Requisição válida: ${e.message}`);
+    }
+  };
+
   const getInvalidRequest = (requestIndex = 0) => {
     const invalidRequests = [{
       data: {},

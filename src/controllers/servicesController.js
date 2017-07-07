@@ -94,7 +94,7 @@ const serviceController = () => {
         .success(await newService.info());
     } catch (err) {
       if (err.code && err.code === 11000) { // já existe serviço com esse machine_name
-        return next(new Boom.conflict('machine_name already used',
+        next(new Boom.conflict('machine_name already used',
           {
             body: [{
               messages: ['already used'],
@@ -102,8 +102,9 @@ const serviceController = () => {
             }],
           },
         ));
+        return;
       }
-      return next(err);
+      next(err);
     }
   };
   /**

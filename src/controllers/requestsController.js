@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const Boom = require('boom');
 const { validate } = require('express-jsonschema');
-const request = require('requestretry');
+const webRequest = require('requestretry');
 const config = require('config');
 
 const Request = require('../models/requestModel');
@@ -74,7 +74,7 @@ const requestsController = () => {
       };
 
       /** tente enviar a requisição para o agendador (no máximo 5 vezes) */
-      await request({
+      await webRequest({
         url: config.HELPDESK_JOB_API_URL,
         json: job,
         method: 'POST',
@@ -87,7 +87,7 @@ const requestsController = () => {
         .jsend
         .success(jsonRequest);
     } catch (e) {
-      if (request.RetryStrategies.NetworkError(e)) {
+      if (webRequest.RetryStrategies.NetworkError(e)) {
         next(new Boom.serverUnavailable('servidor de agendamento indisponível'));
       } else {
         next(e);
