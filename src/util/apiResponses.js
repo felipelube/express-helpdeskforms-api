@@ -7,11 +7,11 @@ const apiResponses = () => {
     let error = err;
     /** converta todos os erros para erros Boom */
     if (!error.isBoom) { // se esse é um erro genérico
-      if (error instanceof Error) {
-        error = Boom.wrap(error); // decora o erro com propriedades de erro Boom
-      } else if (error instanceof expressJSONSchema.JsonSchemaValidation) {
+      if (error instanceof expressJSONSchema.JsonSchemaValidation) {
         // crie um novo erro Boom Bad Request em casos de problemas de validação
         error = new Boom.badRequest('Erro na validação dos dados', error.validations);
+      } else if (error instanceof Error) {
+        error = Boom.wrap(error); // decora o erro com propriedades de erro Boom
       }
     }
 

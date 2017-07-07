@@ -36,6 +36,7 @@ const serviceSchema = new Schema({
     required: true,
   },
   notifications: [{
+    _id: false,
     type: {
       type: String,
       enum: NOTIFICATION_TYPES,

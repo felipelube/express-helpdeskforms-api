@@ -54,6 +54,7 @@ const requestSchema = new Schema({
   },
   /* as notificações programadas/feitas, com dados formatados ou aguardando formatação */
   notifications: [{
+    _id: false,
     type: { // o tipo da notificação
       type: String,
       enum: NOTIFICATION_TYPES,
@@ -77,6 +78,7 @@ const requestSchema = new Schema({
       },
       changed: [ // um histórico de status
         {
+          _id: false,
           status_name: {
             type: String,
             enum: NOTFICATION_STATUSES,
@@ -124,6 +126,7 @@ const requestSchema = new Schema({
  */
 function getRequestInfo() {
   let request = this.toJSON();
+  request.id = request._id;
   request = _.omit(request, ['__v', '_id']);
   return Promise.resolve(request);
 }
@@ -135,6 +138,7 @@ function getRequestInfo() {
  */
 function getJSONSchema() {
   const generatedSchema = requestSchema.jsonSchema();
+  generatedSchema.id = '/ServiceSchema';
   generatedSchema.properties.data.$ref = '/ServiceFormSchema';
   return generatedSchema;
 }
@@ -150,7 +154,7 @@ function getIdSchema() {
   partialSchema.properties = _.pick(partialSchema.properties, '_id');
   partialSchema.required = _.filter(partialSchema.required, name => name === '_id');
   partialSchema.properties.id = partialSchema.properties._id;
-  delete partialSchema.properties_id;
+  delete partialSchema.properties._id;
   return partialSchema;
 }
 
