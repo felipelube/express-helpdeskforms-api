@@ -16,6 +16,9 @@ chai.use(chaiHttp);
 
 const API_SERVICES_BASE_URL = '/api/v1/services';
 const API_REQUESTS_BASE_URL = '/api/v1/requests';
+
+/** Funções de conveniência */
+
 /**
  * @function clearDB
  * @desc limpa as coleções do banco de dados
@@ -32,32 +35,54 @@ const postService = service => chai.request(server)
 const getService = serviceName => chai.request(server)
     .get(`${API_SERVICES_BASE_URL}/${serviceName}`);
 
-
 const putService = (serviceName, data) => chai.request(server)
     .put(`${API_SERVICES_BASE_URL}/${serviceName}`)
     .send(data);
 
 const deleteService = serviceName => chai.request(server)
     .delete(`${API_SERVICES_BASE_URL}/${serviceName}`);
-    
 
-const delay = (timeout = 10000) => {
-  return new Promise ((resolve, reject)=>{
-    setTimeout(resolve, timeout)
-  });
-};
- 
-before(clearDB);
+const postRequest = request => chai.request(server)
+    .post(API_REQUESTS_BASE_URL)
+    .send(request);
 
-/* describe.only('Rodando integração com o Agendador', () => {
-  it('OK', (done)=>{
-    done();
-  });
-}); */
+const getRequest = requestID => chai.request(server)
+    .get(`${API_REQUESTS_BASE_URL}/${requestID}`);
+
+const putRequest = (requestID, data) => chai.request(server)
+    .put(`${API_REQUESTS_BASE_URL}/${requestID}`)
+    .send(data);
+
+const delay = (timeout = 10000) => new Promise((resolve) => {
+  setTimeout(resolve, timeout);
+});
+
+before(clearDB); // limpe o banco antes de começar os testes
 
 describe('Testes com Serviços', () => {
   describe('Listagem', () => {
+    it('Deve retornar uma lista vazia', async () => {
+      chai.request(server)
+        .get(API_SERVICES_BASE_URL)
+        .end(async (err, res) => {
+          res.should.have.status(200);
+          const requests = res.body.data;
+          requests.should.be.an('array');
+          requests.length.should.be.eq(0);
+        });
+    });
 
+    it('Deve retornar uma lista com um Serviço, depois de inserir um', async () => {
+      await mockObjects.createValidService();
+      chai.request(server)
+        .get(API_SERVICES_BASE_URL)
+        .end(async (err, res) => {
+          res.should.have.status(200);
+          const requests = res.body.data;
+          requests.should.be.an('array');
+          requests.length.should.be.eq(1);
+        });
+    });
   });
   describe('Criação', () => { // CREATE
     it('Deve aceitar a criação de um Serviço gerado corretamente', async () => {
@@ -302,34 +327,50 @@ describe('Testes com Serviços', () => {
 
 describe('Testes com Requisições', () => {
   describe('Listagem', () => {
+    it('Deve retornar uma lista vazia', async () => {
+      chai.request(server)
+        .get(API_REQUESTS_BASE_URL)
+        .end(async (err, res) => {
+          res.should.have.status(200);
+          const requests = res.body.data;
+          requests.should.be.an('array');
+          requests.length.should.be.eq(0);
+        });
+    });
 
+    it('Deve retornar uma lista com uma Requisição, depois de inserir uma', async () => {
+      const validService = await mockObjects.createValidService();
+      await mockObjects.createValidRequest(validService);
+      chai.request(server)
+        .get(API_REQUESTS_BASE_URL)
+        .end(async (err, res) => {
+          res.should.have.status(200);
+          const requests = res.body.data;
+          requests.should.be.an('array');
+          requests.length.should.be.eq(1);
+        });
+    });
   });
   describe('Criação', () => { // CREATE
     it('Deve aceitar a criação de uma Requisição gerada corretamente', async () => {
       const validService = await mockObjects.createValidService();
       const validRequest = await mockObjects.createValidRequest(validService);
-      chai.request(server)
-        .post(API_REQUESTS_BASE_URL)
-        .send(validRequest)
+      postRequest(validRequest)
         .end(async (err, res) => {
-          res.should.have.status(201);          
+          res.should.have.status(201);
         });
       await delay(500); // dê tempo para o agendador processar esta requisição
     });
 
     it('Não deve aceitar a criação de uma Requisição sem service_name', async () => {
-      chai.request(server)
-        .post(API_REQUESTS_BASE_URL)
-        .send(await mockObjects.getInvalidRequest())
+      postRequest(await mockObjects.getInvalidRequest())
         .end((err, res) => {
-          res.should.have.status(400);          
+          res.should.have.status(400);
         });
     });
 
     it('Não deve aceitar a criação de uma Requisição com Serviço inexistente', async () => {
-      chai.request(server)
-        .post(API_REQUESTS_BASE_URL)
-        .send(await mockObjects.getInvalidRequest(1))
+      postRequest(await mockObjects.getInvalidRequest(1))
         .end((err, res) => {
           res.should.have.status(404);
         });
@@ -339,9 +380,7 @@ describe('Testes com Requisições', () => {
       const validService = await mockObjects.createValidService();
       const invalidRequest = await mockObjects.getInvalidRequest();
       invalidRequest.service_name = validService.machine_name;
-      chai.request(server)
-        .post(API_REQUESTS_BASE_URL)
-        .send(invalidRequest)
+      postRequest(invalidRequest)
         .end((err, res) => {
           res.should.have.status(400);
         });
@@ -350,12 +389,10 @@ describe('Testes com Requisições', () => {
     it('Não deve aceitar a criação de uma Requisição inválida, mesmo com Serviço existente (2)', async () => {
       const validService = await mockObjects.createValidService();
       const invalidRequest = await mockObjects.getInvalidRequest(2);
-      invalidRequest.service_name = validService.machine_name;      
-      chai.request(server)
-        .post(API_REQUESTS_BASE_URL)
-        .send(invalidRequest)
+      invalidRequest.service_name = validService.machine_name;
+      postRequest(invalidRequest)
         .end((err, res) => {
-          res.should.have.status(400);          
+          res.should.have.status(400);
         });
     });
   });
@@ -364,9 +401,8 @@ describe('Testes com Requisições', () => {
     it('Deve retornar corretamente uma Requisição criada', async () => {
       const validService = await mockObjects.createValidService();
       const validRequest = await mockObjects.createValidRequest(validService);
-      chai.request(server)
-        .get(`${API_REQUESTS_BASE_URL}/${validRequest.id}`)
-        .end((err, res) => {          
+      getRequest(validRequest.id)
+        .end((err, res) => {
           res.should.have.status(200);
           res.body.status.should.eql('success');
           const createdRequest = res.body.data;
@@ -376,11 +412,11 @@ describe('Testes com Requisições', () => {
           createdRequest.should.have.property('service_name', validRequest.service_name);
           createdRequest.should.have.property('data');
           createdRequest.should.have.property('notifications');
-          
+
           createdRequest.should.have.property('status', validRequest.status);
 
           /** @todo resolver problema com datas */
-          // createdRequest.data.should.deep.equal(validRequest.data); 
+          // createdRequest.data.should.deep.equal(validRequest.data);
           // createdRequest.notifications.should.deep.equal(validRequest.notifications);
 
           /* TIMESTAMPS */
@@ -402,9 +438,7 @@ describe('Testes com Requisições', () => {
       const validService = await mockObjects.createValidService();
       const validRequest = await mockObjects.createValidRequest(validService);
 
-      chai.request(server)
-        .put(`${API_REQUESTS_BASE_URL}/${validRequest.id}`)
-        .send(dataToUpdate)
+      putRequest(validRequest.id, dataToUpdate)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.status.should.eql('success');
@@ -428,9 +462,7 @@ describe('Testes com Requisições', () => {
       const validService = await mockObjects.createValidService();
       const validRequest = await mockObjects.createValidRequest(validService);
 
-      chai.request(server)
-        .put(`${API_REQUESTS_BASE_URL}/${validRequest.id}`)
-        .send(dataToUpdate)
+      putRequest(validRequest.id, dataToUpdate)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.status.should.eql('success');
