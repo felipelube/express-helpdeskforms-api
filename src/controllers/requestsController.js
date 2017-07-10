@@ -73,13 +73,22 @@ const requestsController = () => {
         data: jsonRequest,
       };
 
+      let retryDelay = 5000;
+      let maxAttempts = 5;
+
+      /** Reduza o tempo e número de tentativas em ambiente de teste */
+      if (process.env.NODE_ENV === 'test') {
+        retryDelay = 1000;
+        maxAttempts = 2;
+      }
+
       /** tente enviar a requisição para o agendador (no máximo 5 vezes) */
       await webRequest({
         url: config.HELPDESK_JOB_API_URL,
         json: job,
         method: 'POST',
-        retryDelay: 5000,
-        maxAttempts: 5,
+        retryDelay,
+        maxAttempts,
       });
 
       res

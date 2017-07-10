@@ -10,7 +10,7 @@ describe('Testes com Serviços', () => {
     it('Deve retornar uma lista vazia', async () => {
       chai.request(server)
         .get(API_SERVICES_BASE_URL)
-        .end(async (err, res) => {
+        .end((err, res) => {
           res.should.have.status(200);
           const requests = res.body.data;
           requests.should.be.an('array');
@@ -22,7 +22,7 @@ describe('Testes com Serviços', () => {
       await mockObjects.createValidService();
       chai.request(server)
         .get(API_SERVICES_BASE_URL)
-        .end(async (err, res) => {
+        .end((err, res) => {
           res.should.have.status(200);
           const requests = res.body.data;
           requests.should.be.an('array');
@@ -32,7 +32,7 @@ describe('Testes com Serviços', () => {
   });
   describe('Criação', () => { // CREATE
     it('Deve aceitar a criação de um Serviço gerado corretamente', async () => {
-      await clearDB;
+      await clearDB();
       const validService = await mockObjects.getValidService();
 
       postService(validService)
@@ -276,7 +276,7 @@ describe('Testes com Requisições', () => {
     it('Deve retornar uma lista vazia', async () => {
       chai.request(server)
         .get(API_REQUESTS_BASE_URL)
-        .end(async (err, res) => {
+        .end((err, res) => {
           res.should.have.status(200);
           const requests = res.body.data;
           requests.should.be.an('array');
@@ -289,7 +289,7 @@ describe('Testes com Requisições', () => {
       await mockObjects.createValidRequest(validService);
       chai.request(server)
         .get(API_REQUESTS_BASE_URL)
-        .end(async (err, res) => {
+        .end((err, res) => {
           res.should.have.status(200);
           const requests = res.body.data;
           requests.should.be.an('array');
@@ -298,15 +298,17 @@ describe('Testes com Requisições', () => {
     });
   });
   describe('Criação', () => { // CREATE
-    it('Deve aceitar a criação de uma Requisição gerada corretamente', async () => {
-      const validService = await mockObjects.createValidService();
-      const validRequest = await mockObjects.createValidRequest(validService);
-      postRequest(validRequest)
-        .end(async (err, res) => {
-          res.should.have.status(201);
+    it('Deve aceitar a criação de uma Requisição gerada corretamente', (done) => {
+      mockObjects.createValidService()
+        .then(validService => mockObjects.createValidRequest(validService))
+        .then((validRequest) => {
+          postRequest(validRequest)
+            .end((err, res) => {
+              res.should.have.status(201);
+              done();
+            });
         });
-      await delay(500); // dê tempo para o agendador processar esta requisição
-    });
+    }).timeout(20000); //dê tempo para o agendador responder
 
     it('Não deve aceitar a criação de uma Requisição sem service_name', async () => {
       postRequest(await mockObjects.getInvalidRequest())
