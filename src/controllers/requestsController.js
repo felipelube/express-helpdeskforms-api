@@ -111,10 +111,10 @@ const requestsController = () => {
    * reduzida a estas propriedades do JSON Schema geral para Requisições.
    * @todo refatorar
    */
-  const validateUpdate = (req, res, next) => {
+  const validateUpdate = async (req, res, next) => {
     try {
       const updatableProperties = Request.getUpdatableProperties();
-      const updateData = _.pick(req.body, updatableProperties);
+      const updateData = _.pick(req.body, updatableProperties);      
 
       if (_.size(updateData) === 0) { // cliente passou apenas propriedades não atualizáveis
         throw new Boom.badRequest('update data is not valid');
@@ -124,12 +124,13 @@ const requestsController = () => {
       const partialSchemaForUpdate = Request.getJSONSchema();
       partialSchemaForUpdate.required = _.keys(updateData);
       partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties,
-        _.keys(updateData));
-
+        _.keys(updateData));      
+      
+      const requestDataSchema = await Request.getDataSchema(req.request.service_name);
       if (_.size(partialSchemaForUpdate.properties) === 0) {
         throw new Boom.badRequest('update data is not valid');
       }
-      return validate({ body: partialSchemaForUpdate })(req, res, next);
+      return validate({ body: partialSchemaForUpdate }, [requestDataSchema])(req, res, next);
     } catch (e) {
       return next(e);
     }

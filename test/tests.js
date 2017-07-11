@@ -308,7 +308,7 @@ describe('Testes com Requisições', () => {
               done();
             });
         });
-    }).timeout(20000); //dê tempo para o agendador responder
+    }).timeout(20000); // dê tempo para o agendador responder
 
     it('Não deve aceitar a criação de uma Requisição sem service_name', async () => {
       postRequest(await mockObjects.getInvalidRequest())
