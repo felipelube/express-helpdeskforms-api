@@ -1,3 +1,5 @@
+/** usar app.locals e req.locals */
+
 const _ = require('lodash');
 const Boom = require('boom');
 const { validate } = require('express-jsonschema');
