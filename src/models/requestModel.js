@@ -62,34 +62,7 @@ const requestSchema = new Schema({
     },
     data: { // os dados da notificação formatados, prontos para serem enviados
       type: Object,
-      required: true,
-    },
-    priority: { // a prioridade no envio dessa notificação
-      type: Number,
-      max: 9,
-      default: 5,
-      required: true,
-    },
-    status: { // o status dessa notificação quando esse status mudou
-      status: {
-        type: String,
-        enum: NOTFICATION_STATUSES,
-        required: true,
-      },
-      changed: [ // um histórico de status
-        {
-          _id: false,
-          status_name: {
-            type: String,
-            enum: NOTFICATION_STATUSES,
-            required: true,
-          },
-          timestamp: {
-            type: Date,
-            required: true,
-          },
-        },
-      ],
+      required: false,
     },
   },
   ],

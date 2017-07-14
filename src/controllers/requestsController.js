@@ -39,11 +39,11 @@ const requestsController = () => {
   const validateRequest = async (req, res, next) => {
     try {
       if (!req.body.service_name) {
-        throw new Boom.badRequest('Missing service_name');
+        throw new Boom.badRequest('nome de serviço não especificado');
       }
       const service = await Service.findOne({ machine_name: req.body.service_name });
       if (!service) {
-        throw new Boom.notFound('Service for this Request does not exist');
+        throw new Boom.notFound('nome de serviço não existe');
       }
       const basicRequestInfoSchema = Request.getJSONSchema();
       const requestDataSchema = await Request.getDataSchema(service.machine_name);
@@ -79,8 +79,8 @@ const requestsController = () => {
       const retryDelay = process.env.NODE_ENV === 'test' ? 1000 : 5000;
       const maxAttempts = process.env.NODE_ENV === 'test' ? 2 : 5;
 
-      /** tente enviar a requisição para o agendador (no máximo 5 vezes) */
-      await webRequest({
+      /** tente enviar a requisição para o agendador */
+      const scheduleRes = await webRequest({
         url: config.HELPDESK_JOB_API_URL,
         json: job,
         method: 'POST',
@@ -93,6 +93,7 @@ const requestsController = () => {
         .jsend
         .success(jsonRequest);
     } catch (e) {
+      //falhe a criação da requisição se o servidor de agendamento não responder
       if (webRequest.RetryStrategies.NetworkError(e)) {
         next(new Boom.serverUnavailable('servidor de agendamento indisponível'));
       } else {
@@ -150,8 +151,8 @@ const requestsController = () => {
    */
   const update = async (req, res, next) => {
     try {
-      const request = await Request.findByIdAndUpdate(res.locals.request.id, res.locals.request.updateData,
-        { new: true });
+      const request = await Request.findByIdAndUpdate(res.locals.request.id,
+        res.locals.request.updateData, { new: true });
       if (!request) {
         throw new Boom.notFound('Request not found');
       }

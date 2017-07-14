@@ -124,36 +124,7 @@ const mockObjects = () => {
       execution_date_time: new Date(),
       parent_sa: 288987,
     },
-    notifications: [{
-      type: 'email',
-      data: {
-        to: 'atendimento@prodest.es.gov.br',
-        from: 'teste@example.com',
-        body: ` %CATEGORY=Banco de dados.manutenção
-                  %PARENT=288987
-                  %SUMMARY=Este script é apenas um teste para o nosso sistema - BD_TESTE
-                %DESCRIPTION=Breve descrição do que o script vai fazer: Este script é apenas um teste para o nosso sistema
-                SGDB (Oracle/SQL Server): Oracle
-                Nome do banco: BD_TESTE
-                Ambiente (Desenvolvimento, Teste, Treinamento, Homologação ou Produção): Produção
-                Os scripts criam novos objetos no banco (tabelas, views, packages ou outros)? Não
-                É necessário fazer backup do banco de dados antes da execução do script (Sim - Prazo de retenção/Não)? Não
-                Data e hora para execução dos scripts: Assim que possível
-                Depende de outra SA ou procedimento para ser executado: (Sim - Qual/Não)? Não
-                Instruções adicionais para execução ou outras informações: `,
-        subject: 'Este script é apenas um teste para o nosso sistema - BD_TESTE',
-        attachments: [],
-        /** @todo */
-      },
-      priority: 0,
-      status: {
-        status: 'awaitingSending',
-        changed: [{
-          status_name: 'awaitingSending',
-          timestamp: new Date(),
-        }],
-      },
-    }],
+    notifications: [],
     status: 'new',
   });
 

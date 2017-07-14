@@ -10,21 +10,6 @@
 		"execution_date_time": "2017-06-30T19:52:34.350Z",
 		"parent_sa": 288987
 	},
-	"notifications": [
-		{
-			"type": "email",
-			"data": {},
-			"priority": 0,
-			"status": {
-				"status": "awaitingSending",
-				"changed": [
-					{
-						"status_name": "awaitingSending",
-						"timestamp": "2017-06-30T19:52:34.350Z"
-					}
-				]
-			}
-		}
-	],
+	"notifications": [],
 	"status": "new"
 }
