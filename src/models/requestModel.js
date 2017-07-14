@@ -9,16 +9,11 @@ const Schema = mongoose.Schema;
 
 /**
  * CONSTANTES */
-const NOTFICATION_STATUSES = [
-  'awaitingSending', // dados processados, aguardando ser enviada por e-mail
-  'awaitingDataProcess', // dados não processados, aguardando processamento
-  'sent', // enviada
-];
 const REQUEST_STATUSES = [
-  'new', // requisição nova, status padrão
-  'sentToScheduler', // todas notificações enviadas para o agendador
-  'notificationsProcessed', // todas notificações enviadas para o agendador
-  'notificationsSent', // todas notificações enviadas
+  'new', // requisição nova, status inicial
+  'sentToScheduler', // Requisição recebida e adicionada na fila do Agendador
+  'notificationsTranslated', // dados das notificações traduzidos
+  'notificationsSent', // todas notificações foram enviadas
   'caOpened', // A SA foi aberta no CA (recebida a notificação de abertura)
   'caPaused', // A SA foi pausada no CA (recebida a notificação de pendência do cliente)
   'caClosed', // A SA foi fechada no CA (recebida a notificação de fechamento)
