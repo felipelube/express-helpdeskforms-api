@@ -323,7 +323,7 @@ describe('Testes com Requisições', () => {
   describe('Atualização', () => {
     it('Deve atualizar sem problemas o status da Requisição', async () => {
       const dataToUpdate = {
-        status: 'notificationsProcessed',
+        status: 'notificationsTranslated',
       };
       const validService = await mockObjects.createValidService();
       const validRequest = await mockObjects.createValidRequest(validService);

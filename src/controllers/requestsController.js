@@ -71,7 +71,7 @@ const requestsController = () => {
       const jsonRequest = await newRequest.getInfo();
 
       const job = {
-        type: 'preProcessNotifications',
+        type: 'translateNotificationsData',
         data: jsonRequest,
       };
 
