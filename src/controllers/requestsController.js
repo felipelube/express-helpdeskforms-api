@@ -1,4 +1,4 @@
-/** usar app.locals e req.locals */
+/** usar app.locals e res.locals */
 
 const _ = require('lodash');
 const Boom = require('boom');
@@ -75,14 +75,9 @@ const requestsController = () => {
         data: jsonRequest,
       };
 
-      let retryDelay = 5000;
-      let maxAttempts = 5;
-
       /** Reduza o tempo e número de tentativas em ambiente de teste */
-      if (process.env.NODE_ENV === 'test') {
-        retryDelay = 1000;
-        maxAttempts = 2;
-      }
+      const retryDelay = process.env.NODE_ENV === 'test' ? 1000 : 5000;
+      const maxAttempts = process.env.NODE_ENV === 'test' ? 2 : 5;
 
       /** tente enviar a requisição para o agendador (no máximo 5 vezes) */
       await webRequest({
@@ -122,13 +117,13 @@ const requestsController = () => {
         throw new Boom.badRequest('update data is not valid');
       }
 
-      req.request.updateData = updateData;
+      res.locals.request.updateData = updateData;
       const partialSchemaForUpdate = Request.getJSONSchema();
       partialSchemaForUpdate.required = _.keys(updateData);
       partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties,
         _.keys(updateData));      
       
-      const requestDataSchema = await Request.getDataSchema(req.request.service_name);
+      const requestDataSchema = await Request.getDataSchema(res.locals.request.service_name);
       if (_.size(partialSchemaForUpdate.properties) === 0) {
         throw new Boom.badRequest('update data is not valid');
       }
@@ -155,7 +150,7 @@ const requestsController = () => {
    */
   const update = async (req, res, next) => {
     try {
-      const request = await Request.findByIdAndUpdate(req.request.id, req.request.updateData,
+      const request = await Request.findByIdAndUpdate(res.locals.request.id, res.locals.request.updateData,
         { new: true });
       if (!request) {
         throw new Boom.notFound('Request not found');
@@ -172,7 +167,7 @@ const requestsController = () => {
    */
   const view = async (req, res, next) => {
     try {
-      res.jsend.success(await req.request.getInfo());
+      res.jsend.success(await res.locals.request.getInfo());
     } catch (e) {
       next(e);
     }
@@ -189,7 +184,7 @@ const requestsController = () => {
       if (!request) {
         throw new Boom.notFound('Request not found');
       }
-      req.request = request;
+      res.locals.request = request;
       next();
     } catch (e) {
       next(e);

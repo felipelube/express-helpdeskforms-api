@@ -1,4 +1,4 @@
-/** usar app.locals e req.locals */
+/** usar app.locals e res.locals */
 
 const _ = require('lodash');
 const Boom = require('boom');
@@ -55,7 +55,7 @@ const serviceController = () => {
         throw new Boom.badRequest('update data is not valid');
       }
 
-      req.service.updateData = updateData;
+      res.locals.service.updateData = updateData;
       const partialSchemaForUpdate = Service.getJSONSchema();
       partialSchemaForUpdate.required = _.keys(updateData);
       partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties,
@@ -120,7 +120,7 @@ const serviceController = () => {
       if (!service) {
         throw new Boom.notFound('Service not found');
       }
-      req.service = service;
+      res.locals.service = service;
       next();
     } catch (e) {
       next(e);
@@ -134,7 +134,7 @@ const serviceController = () => {
    */
   const update = async (req, res, next) => {
     try {
-      const service = await Service.findByIdAndUpdate(req.service.id, req.service.updateData,
+      const service = await Service.findByIdAndUpdate(res.locals.service.id, res.locals.service.updateData,
         { new: true });
       if (!service) {
         throw new Boom.notFound('service not found');
@@ -150,7 +150,7 @@ const serviceController = () => {
    */
   const remove = async (req, res, next) => {
     try {
-      const service = await Service.findByIdAndRemove(req.service.id);
+      const service = await Service.findByIdAndRemove(res.locals.service.id);
       if (!service) {
         throw new Boom.notFound('Service not found');
       }
@@ -165,7 +165,7 @@ const serviceController = () => {
    */
   const view = async (req, res, next) => {
     try {
-      res.jsend.success(await req.service.info());
+      res.jsend.success(await res.locals.service.info());
     } catch (e) {
       next(e);
     }

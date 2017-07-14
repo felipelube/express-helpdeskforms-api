@@ -87,7 +87,7 @@ describe('Testes com Serviços', () => {
       serviceCreated.should.have.property('name', createdService.name);
       serviceCreated.should.have.property('category', createdService.category);
       serviceCreated.should.have.property('published', createdService.published);
-      serviceCreated.should.have.property('sa_category', createdService.sa_category);      
+      serviceCreated.should.have.property('sa_category', createdService.sa_category);
       if (createdService.description) {
         serviceCreated.should.have.property('description', createdService.description);
       }
@@ -141,7 +141,7 @@ describe('Testes com Serviços', () => {
 
       /* propriedades que devem estar na resposta, atualizadas */
       serviceUpdated.should.have.property('category', dataToUpdate.category);
-      serviceUpdated.should.have.property('sa_category', dataToUpdate.sa_category);      
+      serviceUpdated.should.have.property('sa_category', dataToUpdate.sa_category);
       Date.parse(serviceUpdated.updatedAt).should.be.gt(
         validService.updatedAt.getTime());
 
@@ -282,7 +282,7 @@ describe('Testes com Requisições', () => {
       const validService = await mockObjects.createValidService();
       const invalidRequest = await mockObjects.getInvalidRequest();
       invalidRequest.service_name = validService.machine_name;
-      const res = await postRequest(invalidRequest)
+      const res = await postRequest(invalidRequest);
 
       res.should.have.status(400);
     });
@@ -291,7 +291,7 @@ describe('Testes com Requisições', () => {
       const validService = await mockObjects.createValidService();
       const invalidRequest = await mockObjects.getInvalidRequest(2);
       invalidRequest.service_name = validService.machine_name;
-      const res = await postRequest(invalidRequest)
+      const res = await postRequest(invalidRequest);
 
       res.should.have.status(400);
     });
@@ -351,7 +351,7 @@ describe('Testes com Requisições', () => {
       const validService = await mockObjects.createValidService();
       const validRequest = await mockObjects.createValidRequest(validService);
 
-      const res = await putRequest(validRequest.id, dataToUpdate)
+      const res = await putRequest(validRequest.id, dataToUpdate);
 
       res.should.have.status(200);
       res.body.status.should.eql('success');
