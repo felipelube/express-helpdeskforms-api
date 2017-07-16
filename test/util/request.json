@@ -11,5 +11,8 @@
 		"parent_sa": 288987
 	},
 	"notifications": [],
-	"status": "new"
+  "status": "new",
+  "ca_info": {
+    "ca_type": "CR"
+  }
 }

@@ -87,7 +87,9 @@ describe('Testes com Serviços', () => {
       serviceCreated.should.have.property('name', createdService.name);
       serviceCreated.should.have.property('category', createdService.category);
       serviceCreated.should.have.property('published', createdService.published);
-      serviceCreated.should.have.property('sa_category', createdService.sa_category);
+      serviceCreated.should.have.property('ca_info');
+      serviceCreated.ca_info.should.have.property('sa_type', createdService.ca_info.sa_type);
+      serviceCreated.ca_info.should.have.property('sa_category', createdService.ca_info.sa_category);
       if (createdService.description) {
         serviceCreated.should.have.property('description', createdService.description);
       }
@@ -119,7 +121,10 @@ describe('Testes com Serviços', () => {
     it('Se tudo estiver OK, deve atualizar', async () => {
       const dataToUpdate = {
         category: 'Banco de dados',
-        sa_category: 'Banco de dados.Criação',
+        ca_info: {
+          sa_category: 'Banco de dados.Criação',
+          sa_type: 'CR',
+        },
       };
       const validService = await mockObjects.createValidService();
       const res = await putService(validService.machine_name, dataToUpdate);
@@ -141,7 +146,9 @@ describe('Testes com Serviços', () => {
 
       /* propriedades que devem estar na resposta, atualizadas */
       serviceUpdated.should.have.property('category', dataToUpdate.category);
-      serviceUpdated.should.have.property('sa_category', dataToUpdate.sa_category);
+      serviceUpdated.should.have.property('ca_info');
+      serviceUpdated.ca_info.should.have.property('sa_category', dataToUpdate.ca_info.sa_category);
+      serviceUpdated.ca_info.should.have.property('sa_type', dataToUpdate.ca_info.sa_type);
       Date.parse(serviceUpdated.updatedAt).should.be.gt(
         validService.updatedAt.getTime());
 
@@ -154,7 +161,10 @@ describe('Testes com Serviços', () => {
     it('Deve atualizar somente propriedades atualizáveis e ignorar as não atualizáveis', async () => {
       const dataToUpdate = {
         category: 'Banco de dados',
-        sa_category: 'Banco de dados.Manutenção',
+        ca_info: {
+          sa_category: 'Banco de dados.Criação',
+          sa_type: 'CR',
+        },
         machine_name: 'bd_maintenance',
       };
       const validService = await mockObjects.createValidService();
@@ -177,7 +187,9 @@ describe('Testes com Serviços', () => {
 
       /* propriedades que devem estar na resposta, atualizadas */
       serviceUpdated.should.have.property('category', dataToUpdate.category);
-      serviceUpdated.should.have.property('sa_category', dataToUpdate.sa_category);
+      serviceUpdated.should.have.property('ca_info');
+      serviceUpdated.ca_info.should.have.property('sa_category', dataToUpdate.ca_info.sa_category);
+      serviceUpdated.ca_info.should.have.property('sa_type', dataToUpdate.ca_info.sa_type);
       Date.parse(serviceUpdated.updatedAt).should.be.gt(
         validService.updatedAt.getTime());
 
@@ -208,6 +220,43 @@ describe('Testes com Serviços', () => {
 
       res.should.have.status(400);
       res.body.status.should.eql('fail');
+    });
+    it('Deve atualizar parcialmente propriedades complexas', async () => {
+      const dataToUpdate = {
+        category: 'Banco de dados',
+        ca_info: {
+          sa_type: 'IN',
+        },
+      };
+      const validService = await mockObjects.createValidService();
+      const res = await putService(validService.machine_name, dataToUpdate);
+
+      res.should.have.status(200);
+      res.body.status.should.eql('success');
+      const serviceUpdated = res.body.data;
+      serviceUpdated.should.be.an('object');
+
+      /* propriedades que devem estar na resposta, intocadas */
+      if (validService.description) {
+        serviceUpdated.should.have.property('description', validService.description);
+      }
+      serviceUpdated.should.have.property('machine_name', validService.machine_name);
+      serviceUpdated.should.have.property('name', validService.name);
+      serviceUpdated.should.have.property('published', validService.published);
+      Date.parse(serviceUpdated.createdAt).should.be.eql(
+        validService.createdAt.getTime());
+
+      /* propriedades que devem estar na resposta, atualizadas */
+      serviceUpdated.should.have.property('category', dataToUpdate.category);
+      serviceUpdated.should.have.property('ca_info');
+      serviceUpdated.ca_info.should.have.property('sa_type', dataToUpdate.ca_info.sa_type);
+      Date.parse(serviceUpdated.updatedAt).should.be.gt(
+        validService.updatedAt.getTime());
+
+      /* propriedades que *não* devem estar na resposta */
+      serviceUpdated.should.not.have.property('_id');
+      serviceUpdated.should.not.have.property('id');
+      serviceUpdated.should.not.have.property('__v');
     });
   });
 

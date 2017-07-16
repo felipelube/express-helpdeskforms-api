@@ -6,10 +6,21 @@ require('mongoose-schema-jsonschema')(mongoose);
 
 const Schema = mongoose.Schema;
 
-const NOTIFICATION_TYPES = ['email']; /** @todo mesclar com essa constante no modelo de Requisições */
 /**
- * SCHEMA
- * @desc o schema para o modelo Serviço
+ * @desc Tipos de Notificação suportados
+ * @todo mesclar com essa constante no modelo de Requisições
+ */
+const NOTIFICATION_TYPES = ['email'];
+/**
+ * Tipos de Solicitação no CA Service Desk Manager
+ */
+const CA_SA_TYPES = [
+  'IN', // Incidente
+  'CR', // Solicitação
+];
+/**
+ * @desc o Schema para o modelo de Serviço
+ * @todo expandir a propriedade category com um ícone, descrição etc
  */
 const serviceSchema = new Schema({
   machine_name: { // nome de máquina do Serviço, usado em urls
@@ -23,27 +34,37 @@ const serviceSchema = new Schema({
     required: true,
   },
   description: String, // descrição para o serviço, pode ser um texto longo
-  form: { // formulário com as descrições dos campos em JSON Schema
+  form: { // formulário em JSON Schema
     type: Object,
     required: true,
   },
-  category: { // categoria simpels para este serviço @todo evoluir
+  category: { // categoria simples para este serviço
     type: String,
     required: true,
   },
-  sa_category: { // categoria no CA Service Desk Manager
-    type: String,
-    required: true,
-  },
-  notifications: [{
-    _id: false,
-    type: {
+  ca_info: {
+    sa_category: { // categoria no CA Service Desk Manager
       type: String,
-      enum: NOTIFICATION_TYPES,
       required: true,
     },
-    data_format: {},
-  }],
+    sa_type: { // o tipo da Solicitação no CA Service Desk Manager
+      type: String,
+      enum: CA_SA_TYPES,
+      required: true,
+      default: 'CR',
+    },
+  },
+  notifications: [ // notificações que devem ser enviadas toda vez que este serviço for requisitado
+    {
+      _id: false,
+      type: {
+        type: String,
+        enum: NOTIFICATION_TYPES,
+        required: true,
+      },
+      data_format: {},
+    },
+  ],
   published: { // publicado: se o serviço está disponível para ser requisitado ou não
     type: Boolean,
     required: true,
@@ -54,30 +75,24 @@ const serviceSchema = new Schema({
 });
 
 /**
- * MÉTODOS E FUNÇÕES */
-
-/**
  * @function info
- * @desc filtra propriedades de uma instância de Serviço escondendo detalhes não necessários,
- * preparando assim para a exibição ao usuário final
+ * @desc filtra propriedades de uma instância de Serviço escondendo detalhes internos, preparando
+ * assim para a exibição ao usuário final
  */
 function info() {
   let service = this.toJSON();
   service = _.omit(service, ['__v', '_id']);
   return service;
 }
-
-
 /**
  * @function getJSONSchema
- * @desc retorna o JSON Schema para o modelo Service, segundo o draft 4 da
- * especificção, usa o pacote mongoose-schema-jsonschema
+ * @desc retorna o JSON Schema para o modelo Service, segundo o draft 4 da especificção, usa o 
+ * pacote mongoose-schema-jsonschema
  */
-
 function getJSONSchema() {
   const generatedSchema = serviceSchema.jsonSchema();
 
-  /* validações não inferidas/incluidas do/no Schema mongoose, mas que devem estar no JSON Schema */
+  /** Insere algumas propriedades não inferias automaticamente a partir do Schema Mongoose */
   generatedSchema.properties.machine_name.maxLength = 32;
   generatedSchema.properties.machine_name.pattern = /[_a-z][_a-z0-9]{0,32}/;
   generatedSchema.properties.name.pattern = /(?=\s*\S).*/;
@@ -90,8 +105,7 @@ function getJSONSchema() {
  * @desc retorna o JSON Schema do formulário para requisitar este serviço
  */
 function getDataSchema() {
-  const service = this;
-  return service.form;
+  return this.form;
 }
 
 
@@ -106,7 +120,7 @@ function getUpdatableProperties() {
     'description',
     'form',
     'category',
-    'sa_category',
+    'ca_info',
     'published',
   ]));
 }
@@ -124,7 +138,8 @@ function getMachineNameJSONSchema() {
 }
 
 /**
- * REGISTRO DE MÉTODOS NO SCHEMA */
+ * Registre os métodos e funções acima no schema
+ */
 serviceSchema.statics.getUpdatableProperties = getUpdatableProperties;
 serviceSchema.statics.getMachineNameJSONSchema = getMachineNameJSONSchema;
 serviceSchema.statics.getJSONSchema = getJSONSchema;

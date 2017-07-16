@@ -81,6 +81,7 @@ const mockObjects = () => {
         'backup_needed',
       ],
     },
+    category: 'Banco de dados',
     notifications: [{
       type: 'email',
       data_format: {
@@ -108,8 +109,10 @@ const mockObjects = () => {
 
       },
     }],
-    category: 'Banco de dados',
-    sa_category: 'Banco de dados.manutenção',
+    ca_info: {
+      sa_category: 'Banco de dados.manutenção',
+      sa_type: 'CR',
+    },
     published: true,
   });
 
@@ -125,7 +128,7 @@ const mockObjects = () => {
       parent_sa: 288987,
     },
     notifications: [],
-    status: 'new',
+    status: 'new',    
   });
 
   const getInvalidService = (serviceIndex = 0) => {

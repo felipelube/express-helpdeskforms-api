@@ -1,5 +1,3 @@
-/** usar app.locals e res.locals */
-
 const _ = require('lodash');
 const Boom = require('boom');
 const { validate } = require('express-jsonschema');
@@ -11,8 +9,9 @@ const Service = require('../models/serviceModel');
 
 const requestsController = () => {
   /**
+   * @async
    * @function listAll
-   * @desc lista todas as Requisições
+   * @desc Lista todos as Requisições
    * @todo listar apenas as Requisições do usuário
    * @todo para um usuário gestor, listar apenas as Requisições do órgão
    */
@@ -31,19 +30,20 @@ const requestsController = () => {
   };
 
   /**
+   * @async
    * @function validateRequest
    * @desc Verifica se o Serviço referenciado pela Requisição enviada existe e, se existe, retorna
    * uma função de validação que considera o JSON Schema geral para toda Requisição e o específico
-   * para o Serviço dessa Requisição.
+   * para o formulário do Serviço dessa Requisição.
    */
   const validateRequest = async (req, res, next) => {
     try {
       if (!req.body.service_name) {
-        throw new Boom.badRequest('nome de serviço não especificado');
+        throw new Boom.badRequest('Nome de Serviço não especificado');
       }
       const service = await Service.findOne({ machine_name: req.body.service_name });
       if (!service) {
-        throw new Boom.notFound('nome de serviço não existe');
+        throw new Boom.notFound('O Serviço para esta Requisição não existe');
       }
       const basicRequestInfoSchema = Request.getJSONSchema();
       const requestDataSchema = await Request.getDataSchema(service.machine_name);
@@ -54,10 +54,46 @@ const requestsController = () => {
   };
 
   /**
+   * @async
+   * @function sendRequestToScheduler
+   * @desc Envia uma Requisição para ser processada no Agendador
+   * @param {any} request o objeto JSON da Requisição
+   * @param {string} [jobType='translateNotificationsData'] o tipo do job
+   */
+  const sendRequestToScheduler = async (request, jobType = 'translateNotificationsData') => {
+    try {
+      if (!jobType) {
+        throw new Error(`O tipo do job é necessário para enviar uma Requisição ao 
+        Agendador`)
+      }
+      const job = {
+        type: jobType,
+        data: request,
+      };
+
+      /** Reduza o tempo e número de tentativas em ambiente de teste */
+      const retryDelay = process.env.NODE_ENV === 'test' ? 1000 : 5000;
+      const maxAttempts = process.env.NODE_ENV === 'test' ? 2 : 5;
+
+      /** tente enviar a requisição para o agendador */
+      await webRequest({
+        url: config.HELPDESK_JOB_API_URL,
+        json: job,
+        method: 'POST',
+        retryDelay,
+        maxAttempts,
+      });
+    } catch (e) {
+      throw e;
+    }
+  };
+
+  /**
+   * @async
    * @function insert
-   * @desc Insere uma nova Requisição e envia ela para o agendador. Os dados já foram validados pelo
-   * middleware validateRequest acima. Retorna a Requisição pronta para ser exibida para o usuário
-   * final.
+   * @desc Insere uma nova Requisição e envia ela para o Agendador. Retorna a Requisição pronta para
+   * ser exibida para o usuário final.
+   * ATENÇÃO: Os dados devem ser validados pelo middleware validateRequest.
    */
   const insert = async (req, res, next) => {
     try {
@@ -66,27 +102,12 @@ const requestsController = () => {
         data: req.body.data,
         notifications: req.body.notifications,
         status: 'new',
+        ca_info: req.body.ca_info,
       }).save();
 
       const jsonRequest = await newRequest.getInfo();
 
-      const job = {
-        type: 'translateNotificationsData',
-        data: jsonRequest,
-      };
-
-      /** Reduza o tempo e número de tentativas em ambiente de teste */
-      const retryDelay = process.env.NODE_ENV === 'test' ? 1000 : 5000;
-      const maxAttempts = process.env.NODE_ENV === 'test' ? 2 : 5;
-
-      /** tente enviar a requisição para o agendador */
-      const scheduleRes = await webRequest({
-        url: config.HELPDESK_JOB_API_URL,
-        json: job,
-        method: 'POST',
-        retryDelay,
-        maxAttempts,
-      });
+      await sendRequestToScheduler(jsonRequest);
 
       res
         .status(201)
@@ -95,7 +116,8 @@ const requestsController = () => {
     } catch (e) {
       //falhe a criação da requisição se o servidor de agendamento não responder
       if (webRequest.RetryStrategies.NetworkError(e)) {
-        next(new Boom.serverUnavailable('servidor de agendamento indisponível'));
+        next(new Boom.serverUnavailable(`Não foi possível criar a Requisição, pois o
+        Servidor de agendamento está indisponível. Tente mais tarde.`));
       } else {
         next(e);
       }
@@ -103,31 +125,35 @@ const requestsController = () => {
   };
 
   /**
+   * @async
    * @function validateUpdate
    * @desc Filtra as propriedades enviadas para atualização pelo cliente para deixar apenas as
-   * permitidas e retorna uma função middleware que valida essas propriedades contra uma versão
-   * reduzida a estas propriedades do JSON Schema geral para Requisições.
-   * @todo refatorar
+   * permitidas e roda a validação em cima dessas propriedades considerando o JSON Schema geral para
+   * Requisições e o JSON Schema específico para o formulário de Serviço relacionado à Requisição.
+   * @todo refatorar para  não usar lodash
    */
   const validateUpdate = async (req, res, next) => {
     try {
       const updatableProperties = Request.getUpdatableProperties();
-      const updateData = _.pick(req.body, updatableProperties);      
-
-      if (_.size(updateData) === 0) { // cliente passou apenas propriedades não atualizáveis
-        throw new Boom.badRequest('update data is not valid');
+      const updateData = _.pick(req.body, updatableProperties);
+      // verifica se o cliente passou apenas propriedades não atualizáveis
+      if (_.size(updateData) === 0) {
+        throw new Boom.badRequest('Dados para atualização inválidos.');
       }
-
-      res.locals.request.updateData = updateData;
+      // filtra o JSON Schema geral apenas às propriedades que se quer atualizar
       const partialSchemaForUpdate = Request.getJSONSchema();
       partialSchemaForUpdate.required = _.keys(updateData);
       partialSchemaForUpdate.properties = _.pick(partialSchemaForUpdate.properties,
-        _.keys(updateData));      
-      
-      const requestDataSchema = await Request.getDataSchema(res.locals.request.service_name);
+        _.keys(updateData));
+      // verifica se o cliente passou apenas propriedades não atualizáveis
       if (_.size(partialSchemaForUpdate.properties) === 0) {
-        throw new Boom.badRequest('update data is not valid');
+        throw new Boom.badRequest('Dados para atualização inválidos.');
       }
+      // Pega o JSON Schema específico para o formulário de Serviço relacionado à Requisição
+      const requestDataSchema = await Request.getDataSchema(res.locals.request.service_name);
+      // deixa disponível para outros middlewares as propriedades que podem ser atualizadas
+      res.locals.request.updateData = updateData;
+      // Por fim, passa ao middleware de validação
       return validate({ body: partialSchemaForUpdate }, [requestDataSchema])(req, res, next);
     } catch (e) {
       return next(e);
@@ -136,18 +162,20 @@ const requestsController = () => {
 
   /**
    * @function validateRequestId
-   * @desc Retorna uma função middleware que valida apenas o parâmetro 'id' da URL usando
-   * parcialmente este  campo tal como definido no JSON Schema geral das Requisição.
+   * @desc Função middleware que valida apenas o parâmetro 'id' na URL tal como ele foi definido no
+   * JSON Schema geral de Requisições
    */
   const validateRequestId = (req, res, next) => validate({
     params: Request.getIdSchema(),
   })(req, res, next);
 
   /**
+   * @async
    * @function update
-   * @desc Simplesmente atualiza uma Requisição. Os dados a serem atualizados já foram validados e
-   * inseridos na requisição http pelo middleware validateUpdate acima. Retorna a Requisição
-   * atualizada e pronta para ser exibido ao usuário final.
+   * @desc Simplesmente atualiza uma Requisição e a retorna pronta para ser exibida para o usuário
+   * final.
+   * ATENÇÃO: Os dados da atualização devem ser validados e inseridos pelo middleware validateUpdate
+   * antes. O objeto da Requisição deve estar req.locals (trabalho do middleware getById).
    */
   const update = async (req, res, next) => {
     try {
@@ -163,8 +191,9 @@ const requestsController = () => {
   };
 
   /**
+   * @async
    * @function view
-   * @desc Simplesmente retorna o objeto Requisição pronto para ser exibido ao usuário final
+   * @desc Simplesmente retorna o objeto Requisição pronto para ser exibido ao usuário final.
    */
   const view = async (req, res, next) => {
     try {
@@ -175,9 +204,11 @@ const requestsController = () => {
   };
 
   /**
+   * @async
    * @function getById
-   * @desc Middleware que busca e, se achado, insere na requisição o objeto completo da Requisição
-   * identificada pelo parâmetro 'id' na URL.
+   * @desc Middleware que busca e, se achado, insere em req.locals a Requisição identificada pelo
+   * parâmetro 'id' na URL.
+   * ATENÇÃO: o parâmetro 'id' de ser validado pelo middleware validateRequestId antes.
    */
   const getById = async (req, res, next) => {
     try {
@@ -193,13 +224,15 @@ const requestsController = () => {
   };
 
   return {
+    /* Métodos */
+    insert,
+    view,
     listAll,
+    update,
+    /* Middlewares */
+    getById,
     validate: validateRequest,
     validateRequestId,
-    getById,
-    view,
-    update,
-    insert,
     validateUpdate,
   };
 };

@@ -64,6 +64,7 @@
     },
     "required": ["summary", "sgdb", "db_name", "environment", "scripts_create_objects", "backup_needed"]
   },
+  "category": "Banco de dados",
   "notifications": [{
     "type": "email",
     "data_format": {
@@ -74,7 +75,9 @@
       "attachments": []
     }
   }],
-  "category": "Banco de dados",
-  "sa_category": "Banco de dados.manutenção",
+  "ca_info": {
+    "sa_category": "Banco de dados.manutenção",
+    "sa_type": "CR"
+  },  
   "published": true
 }
