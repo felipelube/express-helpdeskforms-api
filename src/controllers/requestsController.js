@@ -64,7 +64,7 @@ const requestsController = () => {
     try {
       if (!jobType) {
         throw new Error(`O tipo do job é necessário para enviar uma Requisição ao 
-        Agendador`)
+        Agendador`);
       }
       const job = {
         type: jobType,
@@ -114,7 +114,7 @@ const requestsController = () => {
         .jsend
         .success(jsonRequest);
     } catch (e) {
-      //falhe a criação da requisição se o servidor de agendamento não responder
+      // falhe a criação da requisição se o servidor de agendamento não responder
       if (webRequest.RetryStrategies.NetworkError(e)) {
         next(new Boom.serverUnavailable(`Não foi possível criar a Requisição, pois o
         Servidor de agendamento está indisponível. Tente mais tarde.`));

@@ -128,7 +128,7 @@ const mockObjects = () => {
       parent_sa: 288987,
     },
     notifications: [],
-    status: 'new',    
+    status: 'new',
   });
 
   const getInvalidService = (serviceIndex = 0) => {

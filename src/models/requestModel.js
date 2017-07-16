@@ -130,7 +130,7 @@ function getIdSchema() {
 /**
  * @async
  * @function getDataSchema
- * @desc retorna o schema para determinado Serviço (service_name), que uma Requisição válida para 
+ * @desc retorna o schema para determinado Serviço (service_name), que uma Requisição válida para
  * aquele Serviço deve respeitar
  */
 async function getDataSchema(serviceName) {

@@ -86,7 +86,7 @@ function info() {
 }
 /**
  * @function getJSONSchema
- * @desc retorna o JSON Schema para o modelo Service, segundo o draft 4 da especificção, usa o 
+ * @desc retorna o JSON Schema para o modelo Service, segundo o draft 4 da especificção, usa o
  * pacote mongoose-schema-jsonschema
  */
 function getJSONSchema() {
