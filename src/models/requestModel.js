@@ -82,6 +82,11 @@ const requestSchema = new Schema({
       type: String,
       enum: CA_SA_TYPES,
       default: 'CR',
+      required: true,
+    },
+    requestor_email: { // e-mail do usuário final afetado
+      type: String,
+      required: true,
     },
     sa_status: { // o status da Solicitação/Incidente no CA Service Desk Manager
       type: String,
@@ -113,6 +118,7 @@ function getJSONSchema() {
   const generatedSchema = requestSchema.jsonSchema();
   generatedSchema.id = '/ServiceSchema';
   generatedSchema.properties.data.$ref = '/ServiceFormSchema';
+  generatedSchema.properties.ca_info.requestor_email.pattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
   return generatedSchema;
 }
 /**

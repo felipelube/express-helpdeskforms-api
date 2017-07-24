@@ -129,6 +129,10 @@ const mockObjects = () => {
     },
     notifications: [],
     status: 'new',
+    ca_info: {
+      ca_type: 'CR',
+      requestor_email: 'felipe.braganca@prodest.es.gov.br',
+    },
   });
 
   const getInvalidService = (serviceIndex = 0) => {
