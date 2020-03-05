@@ -61,3 +61,4 @@ typings/
 
 #arquivo com tokens de api e outras informações sensíveis que não devem sincronizar no repositório
 src/config/secrets/*
+!src/config/secrets/index.js.dist
