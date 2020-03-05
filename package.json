@@ -16,7 +16,7 @@
     "config": "^1.26.1",
     "express": "^4.15.3",
     "express-jsonschema": "^1.1.6",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-nodemon": "^2.2.1",
     "jsend": "^1.0.2",
     "jsonwebtoken": "^7.4.1",
