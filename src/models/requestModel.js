@@ -118,7 +118,7 @@ function getJSONSchema() {
   const generatedSchema = requestSchema.jsonSchema();
   generatedSchema.id = '/ServiceSchema';
   generatedSchema.properties.data.$ref = '/ServiceFormSchema';
-  generatedSchema.properties.ca_info.requestor_email.pattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  generatedSchema.properties.ca_info.requestor_email.pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return generatedSchema;
 }
 /**

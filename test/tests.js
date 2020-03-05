@@ -1,6 +1,6 @@
 const { describe, it, before } = require('mocha');
 const { chai, server, clearDB, postService, getService, putService, deleteService, postRequest,
-getRequest, putRequest, API_SERVICES_BASE_URL, API_REQUESTS_BASE_URL } = require('./util/');
+  getRequest, putRequest, API_SERVICES_BASE_URL, API_REQUESTS_BASE_URL } = require('./util/');
 const mockObjects = require('./util/objects');
 
 before(clearDB); // limpe o banco antes de começar os testes

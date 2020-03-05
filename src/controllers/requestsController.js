@@ -63,7 +63,7 @@ const requestsController = () => {
   const sendRequestToScheduler = async (request, jobType = 'translateNotificationsData') => {
     try {
       if (!jobType) {
-        throw new Error(`O tipo do job é necessário para enviar uma Requisição ao 
+        throw new Error(`O tipo do job é necessário para enviar uma Requisição ao
         Agendador`);
       }
       const job = {

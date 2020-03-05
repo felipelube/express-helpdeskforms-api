@@ -12,10 +12,8 @@
     "jsx-a11y/href-no-hash": "off",
     "jsx-a11y/redundant-alt": "off",
     "jsx-a11y/valid-aria-role": "off",
-    
     "no-template-curly-in-string": "off", // strings com expressões-variável serão gravadas no BD
     "new-cap": "off", //varias bibliotecas de terceiros usam nomes de função que começam com maiúsculo
-    "linebreak-style": ["error", "windows"], // projeto feito no windows
     "no-underscore-dangle": ["error", {
       "allow": ["_id"] // objetos do MongoDB têm o _id
     }]

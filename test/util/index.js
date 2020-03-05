@@ -22,29 +22,29 @@ const clearDB = () => Promise.all([
 ]);
 
 const postService = service => chai.request(server)
-    .post(API_SERVICES_BASE_URL)
-    .send(service);
+  .post(API_SERVICES_BASE_URL)
+  .send(service);
 
 const getService = serviceName => chai.request(server)
-    .get(`${API_SERVICES_BASE_URL}/${serviceName}`);
+  .get(`${API_SERVICES_BASE_URL}/${serviceName}`);
 
 const putService = (serviceName, data) => chai.request(server)
-    .put(`${API_SERVICES_BASE_URL}/${serviceName}`)
-    .send(data);
+  .put(`${API_SERVICES_BASE_URL}/${serviceName}`)
+  .send(data);
 
 const deleteService = serviceName => chai.request(server)
-    .delete(`${API_SERVICES_BASE_URL}/${serviceName}`);
+  .delete(`${API_SERVICES_BASE_URL}/${serviceName}`);
 
 const postRequest = request => chai.request(server)
-    .post(API_REQUESTS_BASE_URL)
-    .send(request);
+  .post(API_REQUESTS_BASE_URL)
+  .send(request);
 
 const getRequest = requestID => chai.request(server)
-    .get(`${API_REQUESTS_BASE_URL}/${requestID}`);
+  .get(`${API_REQUESTS_BASE_URL}/${requestID}`);
 
 const putRequest = (requestID, data) => chai.request(server)
-    .put(`${API_REQUESTS_BASE_URL}/${requestID}`)
-    .send(data);
+  .put(`${API_REQUESTS_BASE_URL}/${requestID}`)
+  .send(data);
 
 const delay = (timeout = 10000) => new Promise((resolve) => {
   setTimeout(resolve, timeout);
